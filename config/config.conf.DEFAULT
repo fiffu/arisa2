@@ -1,0 +1,26 @@
+# Default app configs
+# To override the settings here, make a copy of this file, then rename 
+# the new file to `config.conf`. Don't modify or rename this file!
+#
+#
+# All options here may also be overwritten by environment vars.
+#
+# Env var keys are in the format:
+#     SECTIONNAME_OPTION_NAME
+#
+# For example:
+#     [DISCORD]
+#     BOT_TOKEN=...
+#
+# can be overwritten by the following key in the environment:
+#     DISCORD_BOT_TOKEN
+#
+#
+# To use this file, copy values from DEFAULT.ini and modify accordingly
+#
+
+[BOT]
+COMMAND_PREFIX=!
+
+[DISCORD]
+BOT_TOKEN=

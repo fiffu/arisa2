@@ -2,7 +2,7 @@
 
 arisa2 is a rewrite of [Arisa][1.1], a Discord bot created using [`discord.py`][1.2] in early 2018. Since then, various workarounds have been added to the original codebase to support features that were never considered in the initial design.
 
-This rewrite effort is mainly motivated by the major [changes][003] that come with upgrading to discord.py v1.x, which made large parts of the original code obsolete. At the same time, this is a good occasion for the bot's source code to be made public.
+This rewrite effort is mainly motivated by the major [changes][1.3] that come with upgrading to discord.py v1.x, which made large parts of the original code obsolete. At the same time, this is a good occasion for the bot's source code to be made public.
 
 [1.1]:https://arisa-chan.herokuapp.com
 [1.2]:https://discordpy.readthedocs.io/

@@ -5,8 +5,9 @@ import discord
 from discord.ext import commands
 
 from cogs import ENABLED_COGS
-from config import fetch as get_cfg
+import config
 
+DEBUGGING = config.fetch('BOT', 'DEBUGGING', cast_to=bool)
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -18,10 +19,13 @@ stdout_handler.setFormatter(
 stdout_handler.setLevel(logging.INFO)
 logger.addHandler(stdout_handler)
 
-prefix = get_cfg('BOT', 'COMMAND_PREFIX')
+prefix = config.fetch('BOT', 'COMMAND_PREFIX')
 
 
 if __name__ == '__main__':
+    if DEBUGGING:
+        logger.warning('Starting in debug mode.')
+    
     bot = commands.Bot(prefix)
 
     num_cogs_loaded = 0
@@ -35,10 +39,10 @@ if __name__ == '__main__':
         except commands.CommandError as e:
             logger.error('Failed to load cog: {}.{}'.format(
                            cog.__module__, cog.__name__))
-    
+
     logger.info(f'Total of {num_cogs_loaded} cogs loaded')
     
-    token = get_cfg('DISCORD', 'BOT_TOKEN')
-    logger.info(f'Starting bot...')
+    token = config.fetch('DISCORD', 'BOT_TOKEN')
     
+    logger.info(f'Starting bot...')
     bot.run(token)

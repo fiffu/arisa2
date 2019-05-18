@@ -1,26 +1,35 @@
 # Default app configs
-# To override the settings here, make a copy of this file, then rename 
-# the new file to `config.conf`. Don't modify or rename this file!
+# Make a copy of this file, then rename the new file to `config.conf`. 
+# Don't modify or rename this default file!
 #
+# For the bot to work properly, all the specified settings here must be 
+# filled in, either with default settings, or by values provided by you,
+# or defined in environment vars (which will overwrite those here).
 #
-# All options here may also be overwritten by environment vars.
-#
-# Env var keys are in the format:
-#     SECTIONNAME_OPTION_NAME
+# If you use environment vars, they have to be named in this format:
+#       SECTIONNAME_OPTION_NAME
 #
 # For example:
-#     [DISCORD]
-#     BOT_TOKEN=...
-#
+#       [DISCORD]
+#       BOT_TOKEN=...
 # can be overwritten by the following key in the environment:
-#     DISCORD_BOT_TOKEN
+#       DISCORD_BOT_TOKEN
 #
 #
-# To use this file, copy values from DEFAULT.ini and modify accordingly
+# To use this file, copy values from DEFAULT.ini and modify accordingly.
 #
 
 [BOT]
 COMMAND_PREFIX=!
+DEBUGGING=0
 
 [DISCORD]
 BOT_TOKEN=
+
+[GITHUB]
+# SECRET can be personal access token, or password (not recommended).
+# This is supplied as the "password" arg over HTTP Basic Auth to raise the
+# rate-limit on the GitHub API when updating King's Raid EN translation data.
+# The access token does not need any access permissions at all.
+USER=
+SECRET=

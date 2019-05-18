@@ -8,7 +8,7 @@ This rewrite effort is mainly motivated by the major [changes][003] that come wi
 [1.2]:https://discordpy.readthedocs.io/
 [1.3]:https://discordpy.readthedocs.io/en/latest/migrating.html
 
-## Setup and usage
+## Setup
 
 **Basic Configuration**
 

@@ -31,11 +31,20 @@ def fetch(section, option=None, check_env=True, cast_to=None):
         return sec
 
     env = None
-
+    
     if check_env:
         varname = f'{section}_{option}'.upper()
         env = os.environ.get(varname)
-        if cast_to != None:
-            env = cast_to(env)
 
-    return sec.get(option, env)
+    value = sec.get(option, env)
+
+    if value.isnumeric():
+        value = float(value)
+
+    if cast_to != None:
+        env = cast_to(env)
+
+    return value
+
+DEBUGGING = fetch('BOT', 'DEBUGGING', cast_to=bool)
+

@@ -10,7 +10,7 @@ from discord.ext import commands
 import config
 from . import model as kr
 
-DEBUGGING = config.fetch('BOT', 'DEBUGGING', cast_to=bool)
+DEBUGGING = config.DEBUGGING
 NOT_FOUND = "Sorry! I couldn't find anything called `{}`. Try something else?"
 
 PAGES_EMOJI = {

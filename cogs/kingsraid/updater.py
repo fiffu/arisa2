@@ -91,6 +91,7 @@ async def update_eng(loop):
     data = await pull_mog_eng_json(loop)
     with open(JSON_ENG, 'w', encoding='utf-8') as f:
         f.write(json.dumps(data, indent='  '))
+    return
 
 
 async def update_data(loop):
@@ -99,8 +100,10 @@ async def update_data(loop):
         return
     with open(JSON_DATA, 'w', encoding='utf-8') as f:
         f.write(req.text)
+    return
 
 
 async def update_dataset(loop):
     await update_eng(loop)
     await update_data(loop)
+    return

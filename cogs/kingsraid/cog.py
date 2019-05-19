@@ -215,8 +215,8 @@ def create_embed(obj, page=0):
             # Fails on artifacts (they have no portraiturl attrib)
             pass
 
-    for (k, v, *use_inline) in sections:
-        use_inline = bool(use_inline)
+    for (k, v, *others) in sections:
+        use_inline = bool(others)
         embed.add_field(name=f'__{k}__', value=v, inline=use_inline)
     return embed
 
@@ -271,6 +271,7 @@ class KrSearchCog(commands.Cog):
                 ' (running in debug mode)' if DEBUGGING else ''))
             return
         await kr.update(self.bot.loop)
+        self.log.info('Autoupdate complete')
 
 
     @commands.Cog.listener()

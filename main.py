@@ -7,7 +7,7 @@ from discord.ext import commands
 from cogs import ENABLED_COGS
 import config
 
-DEBUGGING = config.fetch('BOT', 'DEBUGGING', cast_to=bool)
+DEBUGGING = config.DEBUGGING
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)

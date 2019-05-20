@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 discord-py = "*"
 pybooru = "*"
+"bs4" = "*"
+parsedatetime = "*"
 
 [dev-packages]
 

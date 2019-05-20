@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "29bfd051b5143562c712ed52e0e9bdd393e212aee3cb5ba18fa0097664f6c469"
+            "sha256": "2366fa05cf0f9b79cf63fb09726a7d16df98a267b72d5254b7d01bcfd966afd7"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -57,6 +57,21 @@
             ],
             "version": "==19.1.0"
         },
+        "beautifulsoup4": {
+            "hashes": [
+                "sha256:034740f6cb549b4e932ae1ab975581e6103ac8f942200a0e9759065984391858",
+                "sha256:945065979fb8529dd2f37dbb58f00b661bdbcbebf954f93b32fdf5263ef35348",
+                "sha256:ba6d5c59906a85ac23dadfe5c88deaf3e179ef565f4898671253e50a78680718"
+            ],
+            "version": "==4.7.1"
+        },
+        "bs4": {
+            "hashes": [
+                "sha256:36ecea1fd7cc5c0c6e4a1ff075df26d50da647b75376626cc186e2212886dd3a"
+            ],
+            "index": "pypi",
+            "version": "==0.0.1"
+        },
         "certifi": {
             "hashes": [
                 "sha256:59b7658e26ca9c7339e00f8f4636cdfe59d34fa37b9b04f6f9e9926b3cece1a5",
@@ -77,6 +92,12 @@
             ],
             "index": "pypi",
             "version": "==1.1.1"
+        },
+        "future": {
+            "hashes": [
+                "sha256:67045236dcfd6816dc439556d009594abf643e5eb48992e36beac09c2ca659b8"
+            ],
+            "version": "==0.17.1"
         },
         "idna": {
             "hashes": [
@@ -126,6 +147,14 @@
             ],
             "version": "==4.5.2"
         },
+        "parsedatetime": {
+            "hashes": [
+                "sha256:3d817c58fb9570d1eec1dd46fa9448cd644eeed4fb612684b02dfda3a79cb84b",
+                "sha256:9ee3529454bf35c40a77115f5a596771e59e1aee8c53306f346c461b8e913094"
+            ],
+            "index": "pypi",
+            "version": "==2.4"
+        },
         "pybooru": {
             "hashes": [
                 "sha256:2cbbcef73b049a403434a7f0fdf48b2aa623b93ade9ec1b01cdeedcfb8358ded",
@@ -140,6 +169,13 @@
                 "sha256:9cf5292fcd0f598c671cfc1e0d7d1a7f13bb8085e9a590f48c010551dc6c4b31"
             ],
             "version": "==2.22.0"
+        },
+        "soupsieve": {
+            "hashes": [
+                "sha256:6898e82ecb03772a0d82bd0d0a10c0d6dcc342f77e0701d0ec4a8271be465ece",
+                "sha256:b20eff5e564529711544066d7dc0f7661df41232ae263619dede5059799cdfca"
+            ],
+            "version": "==1.9.1"
         },
         "typing-extensions": {
             "hashes": [

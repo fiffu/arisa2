@@ -5,9 +5,9 @@ import discord
 from discord.ext import commands
 
 from cogs import ENABLED_COGS
-import config
+import appconfig
 
-DEBUGGING = config.DEBUGGING
+DEBUGGING = appconfig.DEBUGGING
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -19,7 +19,7 @@ stdout_handler.setFormatter(
 stdout_handler.setLevel(logging.INFO)
 logger.addHandler(stdout_handler)
 
-prefix = config.fetch('BOT', 'COMMAND_PREFIX')
+prefix = appconfig.fetch('BOT', 'COMMAND_PREFIX')
 
 
 if __name__ == '__main__':
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     logger.info(f'Total of {num_cogs_loaded} cogs loaded')
     
-    token = config.fetch('DISCORD', 'BOT_TOKEN')
+    token = appconfig.fetch('DISCORD', 'BOT_TOKEN')
     
     logger.info(f'Starting bot...')
     bot.run(token)

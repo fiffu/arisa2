@@ -7,7 +7,7 @@ from os.path import abspath, dirname, getmtime, join
 import aiohttp
 import requests
 
-import config
+import appconfig
 from utils import anypartial
 from utils.scraping import pull_pages
 
@@ -22,8 +22,8 @@ JSON_ENG = join(basedir, "krenglish.json")
 MOG_GITAPI_STUB = 'https://api.github.com/repos/duckness/Mask-of-Goblin/contents/'
 ENG_PATH = 'public/i18n/English/'
 
-GITHUB_USER = config.fetch('GITHUB', 'USER')
-GITHUB_AUTH = config.fetch('GITHUB', 'SECRET')
+GITHUB_USER = appconfig.fetch('GITHUB', 'USER')
+GITHUB_AUTH = appconfig.fetch('GITHUB', 'SECRET')
 
 
 def read_json(fp):

@@ -7,10 +7,10 @@ from types import SimpleNamespace
 import discord
 from discord.ext import commands
 
-import config
+import appconfig
 from . import model as kr
 
-DEBUGGING = config.DEBUGGING
+DEBUGGING = appconfig.DEBUGGING
 NOT_FOUND = "Sorry! I couldn't find anything called `{}`. Try something else?"
 
 PAGES_EMOJI = {

@@ -14,7 +14,7 @@ This rewrite effort is mainly motivated by the major [changes][1.3] that come wi
 
 Firstly, you should fill in the configuration needed for the bot to run. 
 
-1. Go to the `/config` directory and make a copy of the `config.conf.DEFAULT`. 
+1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`. 
 2. Rename the copy to `config.conf`. Only make edits to this copy (they will override the default settings).
 3. Make sure none of the fields are left blank.
 

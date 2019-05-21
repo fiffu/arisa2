@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from typing import Mapping, Sequence
 
 from discord.ext import commands

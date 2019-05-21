@@ -23,6 +23,15 @@
 COMMAND_PREFIX=!
 DEBUGGING=0
 
+[DATABASE]
+# This value is used to connect to the database as libpq connection strings.
+# You can read about connection strings in the official PostreSQL docs:
+# https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+#
+# For simplicity, it is recommended that you use DSNs, which are URIs that
+# begin with "postgresql://..."
+DSN=
+
 [DISCORD]
 BOT_TOKEN=
 

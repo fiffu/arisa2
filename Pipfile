@@ -8,6 +8,8 @@ discord-py = "*"
 pybooru = "*"
 "bs4" = "*"
 parsedatetime = "*"
+aiopg = "*"
+"psycopg2" = "*"
 
 [dev-packages]
 

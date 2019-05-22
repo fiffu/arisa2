@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from typing import Mapping, Sequence
 
 from discord.ext import commands
@@ -9,6 +10,11 @@ from cogs.tracking.trackercog import TrackerCog
 from .plugmixin import PlugMixin, PlugPost
 from .embedfactory import new_plug_embed
 
+
+log = logging.getLogger(__name__)
+
+
+TOPIC = 'krplug'
 
 URLS = {
     '[★Notice★]':
@@ -33,8 +39,8 @@ URLS = {
 
 
 class PlugKingsRaidCog(PlugMixin, TrackerCog):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, bot):
+        self.bot = bot
         self.new_posts = []
 
     @property
@@ -43,8 +49,18 @@ class PlugKingsRaidCog(PlugMixin, TrackerCog):
         return URLS
 
 
-    async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
-        self.new_posts = new_posts
+    # async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
+    #     self.new_posts = new_posts
+
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        pubsub = self.bot.get_cog('PublishSubscribeCog')
+        if pubsub:
+            pubsub.register_cog_to_topic(TOPIC, self)
+        else:
+            log.warning(f'PublishSubscribeCog not found, failed to register '
+                        f'topic "{TOPIC}"')
 
 
     @commands.command()

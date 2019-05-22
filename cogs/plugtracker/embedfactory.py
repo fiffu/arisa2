@@ -10,7 +10,7 @@ ATTRS_INHERITED_FROM_PLUGPOST = [
 ]
 
 
-def new_plug_embed(plugpost: PlugPost):
+def new_plug_embed(topic, plugpost: PlugPost):
     try:
         kwargs = {
             attr: getattr(plugpost, attr)
@@ -25,7 +25,8 @@ def new_plug_embed(plugpost: PlugPost):
         fname, furl = plugpost.forum_name, plugpost.forum_url
         forumlink = f'[{fname}]({furl})'
         embed.add_field(name='Posted in forum', value=forumlink)
-    
+        embed.set_footer(text='To stop receiving updates from this topic, '
+                              f'type !stopann {topic}')
         return embed
 
     except Exception as e:

@@ -73,7 +73,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
     async def get_channelids_by_topic(self, topic: str) -> Set[ChannelId]:
         if topic not in self.topics:
-            raise ValueError(f"no such topic registered: '{topic}'")
+            exc = ValueError(f"no such topic registered: '{topic}'")
+            log.exception(exc)
+            raise exc
         
         query = """SELECT channelid, isactive 
                    FROM topics_channels
@@ -98,8 +100,6 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
                    WHERE channelid = %s;"""
 
         rows = await self.db_query(query, [cid])
-        for row in rows:
-            log.info(row)
         if not rows:
             return []
         

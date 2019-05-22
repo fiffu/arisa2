@@ -4,6 +4,7 @@ import logging
 from typing import Mapping, Sequence
 
 from bs4 import BeautifulSoup
+from discord.ext import commands
 import parsedatetime
 
 from cogs.tracking.config import TRACKER_UPDATE_INTERVAL_SECS
@@ -93,10 +94,53 @@ class PlugMixin:
         raise NotImplementedError
 
 
+    @property
+    def topic(self) -> str:
+        """Mapping[forumName, forumUrl]"""
+        raise NotImplementedError    
+
+    
+    @property
+    def pubsubcog(self):
+        pscog = self.bot.get_cog('PublishSubscribeCog')
+        if not pscog:
+            mycls = self.__class__.__name__
+            log.warning('PublishSubscribeCog not found, please ensure that '
+                        f'it is loaded before {mycls} in cogs.__init__')
+        return pscog
+
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if self.pubsubcog:
+            self.pubsubcog.register_cog_to_topic(self.topic, self)
+        else:
+            log.warning(f'PublishSubscribeCog not found, failed to register '
+                        f'topic "{self.topic}"')
+
+
     async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
-        pass
+        channelids = await get_channelids_by_topic(topic)
+        if not channelids:
+            log.info(f'New updates received on topic "{self.topic}", but no '
+                     f'subscribers to be notified.')
+            return
+
+        pscog = self.pubsubcog
+        if not pscog:
+            log.warning(f'PublishSubscribeCog not found, unable to publish '
+                        f'"{self.topic}" announces to channels')
+            return
+
+        posts = sorted(new_posts, key=lambda p: p.timestamp)
+        sendargs = [
+            dict(content=None, embed=new_plug_embed(self.topic, post))
+            for post in posts
+        ]
+        await pscog.push_to_topic(self.topic, sendargs)
 
 
+    
     async def do_work(self) -> Sequence[PlugPost]:
         pages = await self.pull_forum_pages()
         

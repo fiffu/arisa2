@@ -48,9 +48,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
     def _infer_channel_label(self, channel: Channel):
         cname: str
-        if hasattr(channel, 'name'):
+        if hasattr(channel, 'name') and hasattr(channel, 'guild'):
             # TextChannel
-            cname = 'Guild::' + channel.name
+            cname = 'Guild-' + channel.guild.name + '::' + channel.name
         elif hasattr(channel, 'recipient'):
             # DMChannel
             cname = 'DM::' + str(channel.recipient)
@@ -126,6 +126,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
                     msg = f'failed send({args}) to channel: {cname} id: {cid}'
                     log.exception(msg)
 
+    
     async def subscribe(self, 
                         topics: Sequence[str],
                         channel: ChannelIdentifier,
@@ -177,7 +178,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         if 'all' in topics:
             topics = list(self.topics.keys())
         
+        # Valid topic args
         ts = set(t for t in topics if t in self.topics)
+        # Invalid topic args
         non_ts = set(t for t in topics if t not in self.topics)
         
         channel = ctx.message.channel
@@ -189,8 +192,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         if ts:
             s = 's' if len(ts) != 1 else ''
             uns = 'S' if set_subscribe else 'Uns'
-            msgs.append(f'{uns}ubscribed to topic{s}: **{", ".join(ts)}**')
-            log.info(f'{cname} (id: {cid}) {uns}ubscribed to {", ".join(ts)}')
+            to = 'to' if set_subscribe else 'from'
+            msgs.append(f'{uns}ubscribed {to} topic{s}: **{", ".join(ts)}**')
+            log.info(f'{cname} (id: {cid}) {uns}ubbed {to} {", ".join(ts)}')
         if non_ts:
             s = 's' if len(ts) != 1 else ''
             msgs.append(f'Invalid topic{s}: **{", ".join(non_ts)}**')
@@ -206,7 +210,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
     @commands.command()
     async def stopann(self, ctx, *topics):
-        await self.update_sub(ctx, True, *topics)
+        await self.update_sub(ctx, False, *topics)
 
 
     @commands.command()

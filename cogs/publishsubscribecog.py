@@ -176,7 +176,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
     async def update_sub(self, ctx, set_subscribe=True, *topics):
         if 'all' in topics:
-            topics = list(self.topics.keys())
+            topics = sorted(list(self.topics.keys()))
         
         # Valid topic args
         ts = set(t for t in topics if t in self.topics)

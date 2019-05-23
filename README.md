@@ -16,7 +16,7 @@ This rewrite effort is mainly motivated by the major [changes][1.3] that come wi
     git clone https://github.com/fiffu/arisa2.git
     cd arisa2
 
-**Basic Configuration**
+**Basic configuration**
 
 The bot's main configuration file is found in the `appconfig` folder. Individual cogs generally have their own `config.py` file within their own directories.
 
@@ -25,8 +25,9 @@ To ensure the bot runs correctly (or at all), ensure that you configure it prope
 1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`. 
 2. Rename the copy to `config.conf`. Only make edits to this copy (they will override the default settings).
 3. All the blank fields should be filled in, unless otherwise indicated.
+4. Detailed instructions are in appconfig/README.
 
-**Runtime Environment**
+**Runtime environment**
 
 Set up Python. Check that you have Python 3.6 or later, and install pipenv ([step-by-step guide][3.1]).
     

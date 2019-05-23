@@ -25,7 +25,7 @@ To ensure the bot runs correctly (or at all), ensure that you configure it prope
 1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`. 
 2. Rename the copy to `config.conf`. Only make edits to this copy (they will override the default settings).
 3. All the blank fields should be filled in, unless otherwise indicated.
-4. Detailed instructions are in appconfig/README.
+4. Detailed instructions are in `appconfig/README`.
 
 **Runtime environment**
 

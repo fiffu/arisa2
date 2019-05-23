@@ -79,13 +79,13 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         
         query = """SELECT channelid, isactive 
                    FROM topics_channels
-                   WHERE topic = %s;"""
+                   WHERE topic = %s AND isactive = %s;"""
 
-        rows = await self.db_query(query, [topic])
-        
+        rows = await self.db_query(query, [topic, True])
+
         out = {
             (row['channelid'], row['channelname'])
-            for row in rows if row['isactive']
+            for row in rows
         }
         return out
 
@@ -97,9 +97,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
         query = """SELECT topic 
                    FROM topics_channels 
-                   WHERE channelid = %s;"""
+                   WHERE channelid = %s AND isactive = %s;"""
 
-        rows = await self.db_query(query, [cid])
+        rows = await self.db_query(query, [cid, True])
         if not rows:
             return []
         
@@ -178,6 +178,9 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         if 'all' in topics:
             topics = sorted(list(self.topics.keys()))
         
+        topics = [''.join([c for c in topic if c.isalnum()])
+                  for topic in topics]
+        
         # Valid topic args
         ts = set(t for t in topics if t in self.topics)
         # Invalid topic args
@@ -204,17 +207,17 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
     
     @commands.command()
-    async def startann(self, ctx, *topics):
+    async def track(self, ctx, *topics):
         await self.update_sub(ctx, True, *topics)
 
 
     @commands.command()
-    async def stopann(self, ctx, *topics):
+    async def untrack(self, ctx, *topics):
         await self.update_sub(ctx, False, *topics)
 
 
     @commands.command()
-    async def listann(self, ctx):
+    async def tracking(self, ctx):
         channel = ctx.message.channel
         subbed = await self.get_topics_by_channel(channel)
 

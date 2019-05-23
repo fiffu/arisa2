@@ -183,7 +183,7 @@ class PlugMixin:
 
     
     async def do_work(self) -> Sequence[PlugPost]:
-        log.info(f'Checking "{self.topic}" for updates...')
+        #log.info(f'Checking "{self.topic}" for updates...')
         pages = await self.pull_forum_pages()
         
         posts = []

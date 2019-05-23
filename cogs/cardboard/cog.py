@@ -6,61 +6,25 @@ from typing import List, Tuple
 from discord.ext import commands
 #import requests
 
+from utils.memoized import memoized
+from utils.feedback import FeedbackGetter
 from . import config
-from .client import CLIENT
+from .embedfactory import make_embed
+from .model import *
 from .tag import Parser, ALIASES
 from .texthelpers import codeblocked, make_two_cols
 
-
-log = logging.getLogger(__name__)
-
-client = CLIENT
-
-
-def process_tags(taglist) -> Tuple[List, List, List, List]:
-    taglist = sorted(taglist, key=lambda t: t['post_count'], reverse=True)
-
-    veto = config.VETO
-    floats = config.FLOATS
-    sinks = config.SINKS
-    
-    floated, regular, sunk, vetoed = [], [], [], []
-    for tag in taglist:
-        name = tag['name']
-        
-        if name in veto:
-            vetoed.append(tag)
-            log.info(f'Discarding vetoed tag "{name}"')
-            continue
-
-        for x in sinks:
-            if x in name:
-                sunk.append(tag)
-                break
-        else:
-            # For-else means proceed here if tag was not sunken
-            for x in floats:
-                if x in name:
-                    floated.append(tag)
-                    break
-            else:
-                regular.append(tag)
-
-    sorted_tags = floated + regular + sunk
-    return sorted_tags, floated, sunk, vetoed
-
-
-async def fetch_tag_matches(candidate):
-    if not candidate.endswith('*'):
-            candidate += '*'
-
-    taglist = client.tag_list(candidate)
-    return process_tags(taglist)
+FEEDBACK = FeedbackGetter(config.FEEDBACK)
 
 
 class DanbooruCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def _tagparse(self, query):
+        # Extract the argstr, catch cases where user forgets doublequotes
+        cands, alias_applied = Parser(query).candidates
+        return cands, alias_applied
 
     @commands.command()
     async def tagparse(self, ctx, query: str):
@@ -70,7 +34,7 @@ class DanbooruCog(commands.Cog):
         if len(argstr) > len(query):
             query = argstr
         
-        cands, alias_applied = Parser(query).candidates
+        cands, alias_applied = await self._tagparse(query)
         msg = f'Parsing `{query}` yields:' + codeblocked('\n'.join(cands))
         
         if alias_applied:
@@ -105,7 +69,8 @@ class DanbooruCog(commands.Cog):
         candstr = (f'was converted into the tag candidate string {cand}, '
                    'which ') if cand != query else ''
         
-        msgs.append(f'Your query `{query}` {candstr}will resolve to:\n{cols}')
+        msgs.append(f'Your query for `{query}` {candstr}will resolve to:\n'
+                    f'{cols}')
 
         for treatment in ['floated', 'sunk', 'vetoed']:
             treated_tags = locals()[treatment]
@@ -130,3 +95,32 @@ class DanbooruCog(commands.Cog):
         
         msg = codeblocked('\n'.join(msgs))
         await ctx.send(content=msg)
+
+
+    async def search(self, ctx, query, explicit_rating):
+        await ctx.trigger_typing()
+        posts, search_string = await smart_search(query, explicit_rating)
+        selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
+        
+        if not selected:
+            msg = FEEDBACK.no_results(query=query)
+            if explicit_rating is '-s':
+                msg = FEEDBACK.no_lewd_results(query=query)
+            await ctx.send(content=msg)
+            return
+
+        post, url = selected[0]
+        embed = make_embed(post, url, search_string)
+        await ctx.send(content=None, embed=embed)
+
+
+    @commands.command()
+    async def cute(self, ctx, *args):
+        query = ' '.join(args)
+        await self.search(ctx, query, 's')
+
+    
+    @commands.command()
+    async def lewd(self, ctx, *args):
+        query = ' '.join(args)
+        await self.search(ctx, query, '-s')

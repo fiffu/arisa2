@@ -1,3 +1,14 @@
+POSTS_PER_QUERY = 100 # Max is 100
+
+DAN_COLOUR = 0xa4815e  # Brown
+
+
+FEEDBACK = dict(
+    no_results="I couldn't find any results with `{query}`. Try something else?"
+    ,no_lewd_results="I couldn't find any results with `{}`. Maybe there's no lewd pictures for that?"
+)
+
+
 ALIASES = {
     'arisa_(shadowverse)': 
         ['arisa']
@@ -35,3 +46,8 @@ FLOATS = (
 DEVALUED_TAGS = (
     'comic',
 )
+
+
+# Don't touch these, they're not settings, they're shared vars
+DAN_URL_STUB = 'https://danbooru.donmai.us'
+DAN_SEARCH_STUB = 'https://danbooru.donmai.us/posts?utf8=%E2%9C%93&tags='

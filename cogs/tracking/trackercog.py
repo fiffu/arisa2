@@ -49,7 +49,6 @@ class TrackerCog(commands.Cog):
 
     async def task(self):
         await self.bot.wait_until_ready()
-        log.info('Starting work on ' + self._derived_name)
         proceed = await self.do_work()
         if not proceed:
             log.info('Stopping work on ' + self._derived_name)

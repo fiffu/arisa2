@@ -24,7 +24,7 @@ COMMAND_PREFIX=!
 DEBUGGING=0
 
 [DATABASE]
-# This value is used to connect to the database as libpq connection strings.
+# libpq connection string for connecting a PostgreSQL database.
 # You can read about connection strings in the official PostreSQL docs:
 # https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 #

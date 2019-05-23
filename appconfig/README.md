@@ -16,3 +16,10 @@
 
 [2.1]:https://discordapp.com/developers
 [2.2]:https://github.com/settings/
+
+### To acquire an *API key* from Danbooru:
+
+1. Go to the [Danbooru homepage].
+2. You can view your API key after clicking **My Account** on the navigation bar at the top of the page.
+
+[3.1]:https://danbooru.donmai.us

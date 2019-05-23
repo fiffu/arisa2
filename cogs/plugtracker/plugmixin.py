@@ -4,6 +4,7 @@ import logging
 from typing import Mapping, Sequence
 
 from bs4 import BeautifulSoup
+from discord import Embed
 from discord.ext import commands
 import parsedatetime
 
@@ -82,6 +83,30 @@ class PlugPost(object):
         return timenow - self.timestamp
 
     
+    def to_embed(self, topic):
+        try:
+            kwargs = {
+                attr: getattr(self, attr)
+                for attr in ('title', 'url', 'timestamp')
+            }
+
+            embed = Embed(**kwargs)
+
+            embed.set_author(**self.author)
+            embed.set_image(url=self.image_url)
+            
+            fname, furl = self.forum_name, self.forum_url
+            forumlink = f'[{fname}]({furl})'
+            embed.add_field(name='Posted in forum', value=forumlink)
+            embed.set_footer(text='To stop receiving updates from this topic, '
+                                  f'type !stopann {topic}')
+            return embed
+
+        except Exception as e:
+            log.exception(e)
+            raise e
+
+
     def __repr__(self):
         return f'<PlugPost {self.articleid}: {self.title}>'
 
@@ -120,21 +145,26 @@ class PlugMixin:
 
 
     async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
-        channelids = await get_channelids_by_topic(topic)
-        if not channelids:
-            log.info(f'New updates received on topic "{self.topic}", but no '
-                     f'subscribers to be notified.')
-            return
-
+        topic = self.topic
         pscog = self.pubsubcog
+        
         if not pscog:
             log.warning(f'PublishSubscribeCog not found, unable to publish '
                         f'"{self.topic}" announces to channels')
             return
 
+        channelids = await pscog.get_channelids_by_topic(topic)
+        if not channelids:
+            log.info(f'New updates received on topic "{self.topic}", but no '
+                     f'subscribers to be notified.')
+            return
+
+        
         posts = sorted(new_posts, key=lambda p: p.timestamp)
+        s = 's' if len(posts) != 1 else ''
+        log.info(f'{len(posts)} new posts for topic "{topic}"')
         sendargs = [
-            dict(content=None, embed=new_plug_embed(self.topic, post))
+            dict(content=None, embed=post.to_embed(self.topic))
             for post in posts
         ]
         await pscog.push_to_topic(self.topic, sendargs)
@@ -142,6 +172,7 @@ class PlugMixin:
 
     
     async def do_work(self) -> Sequence[PlugPost]:
+        log.info(f'Checking "{self.topic}" for updates...')
         pages = await self.pull_forum_pages()
         
         posts = []

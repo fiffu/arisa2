@@ -12,6 +12,8 @@ from . import config
 UPDATE_INTERVAL_SECS = config.TRACKER_UPDATE_INTERVAL_SECS
 TIMEOUT_SECS = config.TRACKER_TIMEOUT_SECS
 
+log = logging.getLogger(__name__)
+
 
 class TrackerCog(commands.Cog):
     """Abstract Tracker class that implements the update checking loop
@@ -20,16 +22,18 @@ class TrackerCog(commands.Cog):
     """
     def __init__(self, bot):
         self.bot = bot
-        self.log = logging.getLogger(__name__)
 
         self.update_interval_secs = UPDATE_INTERVAL_SECS
         
         self.aiohttp_timeout_secs = TIMEOUT_SECS
         self.aiohttp_session = aiohttp.ClientSession()
-        self.results = None
 
         # self.do_check.change_interval(seconds=UPDATE_INTERVAL_SECS)
-        self.task.start()
+        clsname = self._derived_name
+        log.info(f'[{clsname}] Starting update check loop, '
+                      f'interval: {self.update_interval_secs} sec')
+        self._task = tasks.loop(seconds=self.update_interval_secs)(self.task)
+        self._task.start()
 
 
     @property
@@ -39,24 +43,18 @@ class TrackerCog(commands.Cog):
 
     async def do_work(self) -> Sequence:
         clsname = self._derived_name
-        self.log.error(f'{clsname}.do_work() is not implementated.')
+        log.error(f'{clsname}.do_work() is not implementated.')
         raise NotImplementedError
 
 
-    @tasks.loop(seconds=UPDATE_INTERVAL_SECS)
     async def task(self):
-        stop = await self.do_work()
-        if stop:
-            self.task.cancel()
-        return
-
-
-    @task.before_loop
-    async def before_do_work(self):
         await self.bot.wait_until_ready()
-        clsname = self._derived_name
-        self.log.info(f'[{clsname}] Starting update check loop, '
-                      f'interval: {self.update_interval_secs} sec')
+        log.info('Starting work on ' + self._derived_name)
+        proceed = await self.do_work()
+        if not proceed:
+            log.info('Stopping work on ' + self._derived_name)
+            self._task.cancel()
+        return
 
 
     async def fetch(self, url, session=None, timeout=None):

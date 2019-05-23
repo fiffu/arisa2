@@ -84,7 +84,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         rows = await self.db_query(query, [topic, True])
 
         out = {
-            (row['channelid'], row['channelname'])
+            (row.get('channelid'), row.get('channelname'))
             for row in rows
         }
         return out
@@ -103,14 +103,14 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         if not rows:
             return []
         
-        return {row['topic'] for row in rows}
+        return {row.get('topic') for row in rows}
 
 
     async def push_to_topic(self, 
                             topic: str,
                             sendkwargs) -> Sequence[dict]:
         
-        cids = self.get_channelids_by_topic(topic)
+        cids = await self.get_channelids_by_topic(topic)
         
         for cid, cname in cids:
             channel = self.bot.get_channel(cid)
@@ -133,7 +133,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
                         set_isactive: bool = True):
         try:
             if type(channel) is ChannelId:
-                channel = await self.bot.get_channel(channel)
+                channel = self.bot.get_channel(channel)
             
             if not channel:
                 raise NotChannelError("'channel' arg was invalid")

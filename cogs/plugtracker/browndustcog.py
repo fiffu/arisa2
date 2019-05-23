@@ -21,10 +21,6 @@ URLS = {
 
 
 class PlugBrownDustCog(PlugMixin, TrackerCog):
-    def __init__(self, bot):
-        self.bot = bot
-
-
     @property
     def plug_forum_name_urls(self) -> Mapping[str, str]:
         """Mapping[forumName, forumUrl]"""

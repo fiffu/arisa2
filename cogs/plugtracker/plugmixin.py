@@ -65,6 +65,13 @@ class PlugPost(object):
     @property
     def timestamp(self) -> datetime.datetime:
         def parse_time(time_str):
+            for short, full in [
+                ('hr', 'hour'),
+                ('wk', 'week'),
+                ('yr', 'year'),
+            ]:
+                time_str = time_str.replace(f' {short}s ', f' {full}s ')
+                time_str = time_str.replace(f' {short} ', f' {full} ')
             # From https://stackoverflow.com/questions/2720319/
             # Find local tz
             now = datetime.datetime.now(datetime.timezone.utc)
@@ -99,7 +106,7 @@ class PlugPost(object):
             forumlink = f'[{fname}]({furl})'
             embed.add_field(name='Posted in forum', value=forumlink)
             embed.set_footer(text='To stop receiving updates from this topic, '
-                                  f'type !stopann {topic}')
+                                  f'type !untrack {topic}')
             return embed
 
         except Exception as e:
@@ -161,8 +168,12 @@ class PlugMixin:
 
         
         posts = sorted(new_posts, key=lambda p: p.timestamp)
+        if not posts:
+            return
+        
         s = 's' if len(posts) != 1 else ''
         log.info(f'{len(posts)} new posts for topic "{topic}"')
+
         sendargs = [
             dict(content=None, embed=post.to_embed(self.topic))
             for post in posts

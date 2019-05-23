@@ -42,3 +42,13 @@ BOT_TOKEN=
 # The access token does not need any access permissions at all.
 USER=
 SECRET=
+
+
+[DANBOORU]
+# This section is optional.
+# The values here are used for HTTP Basic Auth when calling the Danbooru API.
+# If you have a Gold (or better) account on Danbooru, setting your API key 
+# here will provide the Danbooru search feature the same benefits you have -- 
+# mainly the ability to search up to six tags at once and see censored posts.
+USER=
+API_KEY=

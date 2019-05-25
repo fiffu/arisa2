@@ -47,6 +47,11 @@ class TrackerCog(commands.Cog):
         raise NotImplementedError
 
 
+    def cog_unload(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.aiohttp_session.close())
+
+
     async def task(self):
         await self.bot.wait_until_ready()
         proceed = await self.do_work()

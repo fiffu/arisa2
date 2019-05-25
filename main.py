@@ -1,7 +1,6 @@
 import logging
 import sys
 
-import discord
 from discord.ext import commands
 
 from cogs import ENABLED_COGS

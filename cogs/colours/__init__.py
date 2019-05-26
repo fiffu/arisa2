@@ -16,19 +16,11 @@ from appconfig import DEBUGGING
 from cogs.mixins import DatabaseCogMixin
 from utils.lastreleaselock import AsyncLastReleaseLock, NO_UPDATE
 from . import actions
+from .config import *
 
 
 log = logging.getLogger(__name__)
 
-
-#MUTATE_COOLDOWN_TIME = dict(hours=1)
-#REROLL_COOLDOWN_TIME = dict(days=1)
-MUTATE_COOLDOWN_TIME = dict(seconds=5)
-REROLL_COOLDOWN_TIME = dict(seconds=30)
-
-DB_UPDATE_TIMEOUT_SECS = 10
-
-MAX_HEIGHT_ROLE_NAME = '[Arisa] Max colour role height'
 
 # Use a cache factory makes it clear that two locks are created per key,
 # instead of two lock instances being shared across keys

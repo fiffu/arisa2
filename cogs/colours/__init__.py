@@ -227,6 +227,12 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
             # Don't colorize self
             return
 
+        if message.content.startswith(self.bot.command_prefix):
+            # Block mutation from command invocations
+            # Seems to lead to race conditions causing interference in
+            # executing some commands (such as !uncol)
+            return
+
         if not message.guild:
             return
 

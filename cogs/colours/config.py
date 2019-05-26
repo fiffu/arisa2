@@ -6,4 +6,3 @@ REROLL_COOLDOWN_TIME = dict(seconds=30)
 DB_UPDATE_TIMEOUT_SECS = 10
 
 MAX_HEIGHT_ROLE_NAME = '[Arisa] Max colour role height'
-

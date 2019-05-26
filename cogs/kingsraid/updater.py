@@ -63,7 +63,7 @@ async def pull_mog_eng_json(loop):
         filepaths = {
             f['name'].split('.')[0]: f['path']
             for f in subdir
-            if (f['name'].endswith('.json') 
+            if (f['name'].endswith('.json')
                 and not f['name'].startswith('names'))
         }
         out[folder['name']] = filepaths
@@ -74,10 +74,10 @@ async def pull_mog_eng_json(loop):
         for filen, filep in files.items():
             url = MOG_GITAPI_STUB + filep
             url_to_folder_file[url] = (foldern, filen)
-            
+
     results = await pull_pages(
         loop, url_to_folder_file.keys(), auth=make_auth(aio=True))
-    
+
     # Unflatten results to match the original 2-deep nested structure
     for url, res in results:
         j = await res.json()

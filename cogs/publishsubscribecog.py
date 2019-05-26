@@ -59,12 +59,12 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
             cname = 'Group::' + str(channel)
         else:
             raise ValueError("'channel' arg has no name")
-        
+
         return cname
 
 
-    def register_cog_to_topic(self, 
-                              topic: str, 
+    def register_cog_to_topic(self,
+                              topic: str,
                               cog: commands.Cog):
         self.topics[topic].append(cog)
         cogname = cog.qualified_name
@@ -76,8 +76,8 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
             exc = ValueError(f"no such topic registered: '{topic}'")
             log.exception(exc)
             raise exc
-        
-        query = """SELECT channelid, isactive 
+
+        query = """SELECT channelid, isactive
                    FROM topics_channels
                    WHERE topic = %s AND isactive = %s;"""
 
@@ -89,35 +89,35 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
         }
         return out
 
-    
+
     async def get_topics_by_channel(
             self, channel: ChannelIdentifier) -> Set[str]:
 
         cid = self._to_channelid(channel)
 
-        query = """SELECT topic 
-                   FROM topics_channels 
+        query = """SELECT topic
+                   FROM topics_channels
                    WHERE channelid = %s AND isactive = %s;"""
 
         rows = await self.db_query(query, [cid, True])
         if not rows:
             return []
-        
+
         return {row.get('topic') for row in rows}
 
 
-    async def push_to_topic(self, 
+    async def push_to_topic(self,
                             topic: str,
                             sendkwargs) -> Sequence[dict]:
-        
+
         cids = await self.get_channelids_by_topic(topic)
-        
+
         for cid, cname in cids:
             channel = self.bot.get_channel(cid)
             if not channel:
                 log.warning(f'invalid channel: {cname} id: {cid}')
                 continue
-            
+
             for kwargs in sendkwargs:
                 try:
                     await channel.send(**kwargs)
@@ -126,15 +126,15 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
                     msg = f'failed send({args}) to channel: {cname} id: {cid}'
                     log.exception(msg)
 
-    
-    async def subscribe(self, 
+
+    async def subscribe(self,
                         topics: Sequence[str],
                         channel: ChannelIdentifier,
                         set_isactive: bool = True):
         try:
             if type(channel) is ChannelId:
                 channel = self.bot.get_channel(channel)
-            
+
             if not channel:
                 raise NotChannelError("'channel' arg was invalid")
 
@@ -142,7 +142,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
             cid: ChannelId = channel.id
             cname: str = self._infer_channel_label(channel)
-            
+
             guildid: int = None
             guildname: str = None
             if hasattr(channel, 'guild'):
@@ -153,15 +153,15 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
 
             query = """DELETE FROM topics_channels
                        WHERE (channelid=%s AND topic=%s);
-                       INSERT INTO 
+                       INSERT INTO
                            topics_channels(
-                               topic, 
+                               topic,
                                channelid, channelname,
                                guildid, guildname,
                                isactive
                            )
                        VALUES (%s, %s, %s, %s, %s, %s);"""
-            
+
             for topic in topics:
                 await self.db_execute(
                     query, [
@@ -169,7 +169,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
                         topic, cid, cname, guildid, guildname, isactive
                     ]
                 )
-        
+
         except (NotChannelError, psycopg2.OperationalError) as e:
             log.exception('failed to subscribe/unsubscribe due to error')
 
@@ -177,15 +177,15 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
     async def update_sub(self, ctx, set_subscribe=True, *topics):
         if 'all' in topics:
             topics = sorted(list(self.topics.keys()))
-        
+
         topics = [''.join([c for c in topic if c.isalnum()])
                   for topic in topics]
-        
+
         # Valid topic args
         ts = set(t for t in topics if t in self.topics)
         # Invalid topic args
         non_ts = set(t for t in topics if t not in self.topics)
-        
+
         channel = ctx.message.channel
         cname = self._infer_channel_label(channel)
         cid = channel.id
@@ -205,7 +205,7 @@ class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
             msgs.append(self._avail_keys_msg)
         await ctx.send('\n'.join(msgs))
 
-    
+
     @commands.command()
     async def track(self, ctx, *topics):
         await self.update_sub(ctx, True, *topics)

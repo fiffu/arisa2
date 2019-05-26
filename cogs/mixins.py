@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 class DatabaseCogMixin:
     """Singleton-like Cog mixin for acquiring connections to the app database.
-    
+
     This mixin is designed to work with subclasses of discord.ext.commands.Cog
     only. Its basic purpose is to provide bindings to modules that interface
     the app database, as well as to automatically setup and teardown the
@@ -46,7 +46,7 @@ class DatabaseCogMixin:
                     pass
         return rows
 
-    
+
     async def db_query(self, *args, **kwargs):
         """Similar to db_execute(), but uses a DictCursor for reading"""
         rows = []

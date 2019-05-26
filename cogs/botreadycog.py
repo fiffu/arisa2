@@ -10,7 +10,7 @@ class BotReadyCog(commands.Cog):
     """
     Cog that defines bot.on_ready behaviour
     """
-    
+
     def __init__(self, bot):
         self.bot = bot
 

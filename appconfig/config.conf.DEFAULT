@@ -1,8 +1,8 @@
 # Default app configs
-# Make a copy of this file, then rename the new file to `config.conf`. 
+# Make a copy of this file, then rename the new file to `config.conf`.
 # Don't modify or rename this default file!
 #
-# For the bot to work properly, all the specified settings here must be 
+# For the bot to work properly, all the specified settings here must be
 # filled in, either with default settings, or by values provided by you,
 # or defined in environment vars (which will overwrite those here).
 #
@@ -47,8 +47,8 @@ SECRET=
 [DANBOORU]
 # This section is optional.
 # The values here are used for HTTP Basic Auth when calling the Danbooru API.
-# If you have a Gold (or better) account on Danbooru, setting your API key 
-# here will provide the Danbooru search feature the same benefits you have -- 
+# If you have a Gold (or better) account on Danbooru, setting your API key
+# here will provide the Danbooru search feature the same benefits you have --
 # mainly the ability to search up to six tags at once and see censored posts.
 USER=
 API_KEY=

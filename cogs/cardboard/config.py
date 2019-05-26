@@ -10,13 +10,13 @@ FEEDBACK = dict(
 
 
 ALIASES = {
-    'arisa_(shadowverse)': 
+    'arisa_(shadowverse)':
         ['arisa']
-    ,'minami_kotori': 
+    ,'minami_kotori':
         ['birb', 'bird']
-    ,'shimamura_uzuki': 
+    ,'shimamura_uzuki':
         ['dookie', 'duki']
-    ,"annette_(king's_raid)": 
+    ,"annette_(king's_raid)":
         ['annette']
 }
 

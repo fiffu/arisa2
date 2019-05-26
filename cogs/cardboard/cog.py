@@ -1,5 +1,5 @@
 import logging
-import random 
+import random
 from typing import List, Tuple
 
 #from bs4 import BeautifulSoup
@@ -33,10 +33,10 @@ class DanbooruCog(commands.Cog):
         argstr = argstr[0] if argstr else ''
         if len(argstr) > len(query):
             query = argstr
-        
+
         cands, alias_applied = await self._tagparse(query)
         msg = f'Parsing `{query}` yields:' + codeblocked('\n'.join(cands))
-        
+
         if alias_applied:
             convs = '\n'.join([f'{alias} -> {actual}'
                                for alias, actual in alias_applied])
@@ -55,12 +55,12 @@ class DanbooruCog(commands.Cog):
 
         await ctx.trigger_typing()
         sorted_tags, floated, sunk, vetoed = await fetch_tag_matches(cand)
-        
+
         alias_msg = ''
         if alias_applied:
-            alias_msg = '\n'.join([f'{alias} -> {actual}' 
+            alias_msg = '\n'.join([f'{alias} -> {actual}'
                                    for alias, actual in alias_applied])
-        
+
         tagstrs = [f"{t['name']} ({t['post_count']})" for t in sorted_tags]
         cols = codeblocked(make_two_cols(tagstrs))
 
@@ -68,7 +68,7 @@ class DanbooruCog(commands.Cog):
 
         candstr = (f'was converted into the tag candidate string {cand}, '
                    'which ') if cand != query else ''
-        
+
         msgs.append(f'Your query for `{query}` {candstr}will resolve to:\n'
                     f'{cols}')
 
@@ -82,17 +82,17 @@ class DanbooruCog(commands.Cog):
 
         await ctx.send(content=''.join(msgs))
 
-    
+
     @commands.command()
     async def tagalias(self, ctx):
         msgs = []
-        
+
         aliases = sorted(ALIASES.keys())
         maxlen = len(max(aliases, key=len))
         for alias in aliases:
             actual = ALIASES[alias]
             msgs.append(f'{alias:>{maxlen}} -> {actual}')
-        
+
         msg = codeblocked('\n'.join(msgs))
         await ctx.send(content=msg)
 
@@ -101,7 +101,7 @@ class DanbooruCog(commands.Cog):
         await ctx.trigger_typing()
         posts, search_string = await smart_search(query, explicit_rating)
         selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
-        
+
         if not selected:
             msg = FEEDBACK.no_results(query=query)
             if explicit_rating is '-s':
@@ -119,7 +119,7 @@ class DanbooruCog(commands.Cog):
         query = ' '.join(args)
         await self.search(ctx, query, 's')
 
-    
+
     @commands.command()
     async def lewd(self, ctx, *args):
         query = ' '.join(args)

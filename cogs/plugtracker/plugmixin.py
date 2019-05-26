@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 class PlugPost(object):
     PLUG_STUB = 'https://www.plug.game'
-    
+
     def __init__(self, post_div_soup, forum_name, forum_url):
         self.soup = post_div_soup
         self.forum_name = forum_name
@@ -32,27 +32,27 @@ class PlugPost(object):
     def articleid(self):
         return self.soup['data-articleid']
 
-    
+
     @property
     def title(self):
         return self.soup.find(class_='tit_feed').text.strip()
 
-    
+
     @property
     def url(self):
         return self.soup.find(class_='link_rel').attrs['data-url']
 
-    
+
     @property
     def image_url(self):
         img = self.soup.find(class_='img')
         if not img:
             return None
-        
+
         found = re.search(r'url\((.+)\)$', img['style'])
         return found.groups()[0] if found else None
 
-    
+
     @property
     def author(self):
         return {
@@ -61,7 +61,7 @@ class PlugPost(object):
             'icon_url': self.soup.find(class_='thumb')['src'],
         }
 
-    
+
     @property
     def timestamp(self) -> datetime.datetime:
         def parse_time(time_str):
@@ -83,13 +83,13 @@ class PlugPost(object):
             return utc
         return parse_time(self.soup.find_all(class_='time')[1].text)
 
-    
+
     @property
     def time_since_posted(self) -> datetime.timedelta:
         timenow = datetime.datetime.now().astimezone(datetime.timezone.utc)
         return timenow - self.timestamp
 
-    
+
     def to_embed(self, topic):
         try:
             kwargs = {
@@ -101,7 +101,7 @@ class PlugPost(object):
 
             embed.set_author(**self.author)
             embed.set_image(url=self.image_url)
-            
+
             fname, furl = self.forum_name, self.forum_url
             forumlink = f'[{fname}]({furl})'
             embed.add_field(name='Posted in forum', value=forumlink)
@@ -119,7 +119,7 @@ class PlugPost(object):
 
 
 class PlugMixin:
-    """Mixin to be used with discord.ext.command.Cog"""    
+    """Mixin to be used with discord.ext.command.Cog"""
     @property
     def plug_forum_name_urls(self) -> Mapping[str, Url]:
         """Mapping[forumName, forumUrl]"""
@@ -129,9 +129,9 @@ class PlugMixin:
     @property
     def topic(self) -> str:
         """Mapping[forumName, forumUrl]"""
-        raise NotImplementedError    
+        raise NotImplementedError
 
-    
+
     @property
     def pubsubcog(self):
         pscog = self.bot.get_cog('PublishSubscribeCog')
@@ -154,7 +154,7 @@ class PlugMixin:
     async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
         topic = self.topic
         pscog = self.pubsubcog
-        
+
         if not pscog:
             log.warning(f'PublishSubscribeCog not found, unable to publish '
                         f'"{self.topic}" announces to channels')
@@ -166,11 +166,11 @@ class PlugMixin:
                      f'subscribers to be notified.')
             return
 
-        
+
         posts = sorted(new_posts, key=lambda p: p.timestamp)
         if not posts:
             return
-        
+
         s = 's' if len(posts) != 1 else ''
         log.info(f'{len(posts)} new posts for topic "{topic}"')
 
@@ -181,11 +181,11 @@ class PlugMixin:
         await pscog.push_to_topic(self.topic, sendargs)
 
 
-    
+
     async def do_work(self) -> Sequence[PlugPost]:
         #log.info(f'Checking "{self.topic}" for updates...')
         pages = await self.pull_forum_pages()
-        
+
         posts = []
 
         for page in pages:
@@ -205,11 +205,11 @@ class PlugMixin:
         if posts:
             new_posts = self.filtered(posts)
             await self.handle_new_posts(new_posts)
-        
+
         return True
 
 
-    def filtered(self, 
+    def filtered(self,
                  posts: Sequence[PlugPost],
                  cutoff_secs: int = TRACKER_UPDATE_INTERVAL_SECS):
         new_posts = []
@@ -223,10 +223,10 @@ class PlugMixin:
 
     async def pull_forum_pages(self):
         urls = list(self.plug_forum_name_urls.values())
-        
+
         resps = []
         for response in await self.batch_get_urls(self.bot.loop, *urls):
             resps.append(await response.text())
-        
+
         return resps
 

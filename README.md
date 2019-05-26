@@ -22,7 +22,7 @@ The bot's main configuration file is found in the `appconfig` folder. Individual
 
 To ensure the bot runs correctly (or at all), ensure that you configure it properly.
 
-1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`. 
+1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`.
 2. Rename the copy to `config.conf`. Only make edits to this copy (they will override the default settings).
 3. All the blank fields should be filled in, unless otherwise indicated.
 4. Detailed instructions are in `appconfig/README`.
@@ -30,7 +30,7 @@ To ensure the bot runs correctly (or at all), ensure that you configure it prope
 **Runtime environment**
 
 Set up Python. Check that you have Python 3.6 or later, and install pipenv ([step-by-step guide][3.1]).
-    
+
     python --version
     pip install --user --upgrade pipenv
 

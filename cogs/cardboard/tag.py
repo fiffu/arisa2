@@ -28,7 +28,7 @@ class Parser:
         resolve_aliases=True,
         spaces_to_underscore=False,
     )
-    
+
     def __init__(self,
                  userinput: str = '',
                  resolve_aliases: Optional[bool] = None,
@@ -47,15 +47,15 @@ class Parser:
         return '_'.join(string.split())
 
 
-    def parse(self, 
+    def parse(self,
               userinput: str = '',
               **kwargs) -> Tuple[List[str], List[Tuple[str, str]]]:
-        
+
         userinput = userinput or self.userinput
         if not userinput:
             raise ValueError('No userinput was provided')
         self.userinput = userinput
-        
+
         # if hasattr(cls, '_parseargs')
         parseargs = self.parseargs.copy()
         for k, v in kwargs.items():
@@ -68,7 +68,7 @@ class Parser:
 
         candidates = []
         alias_applied: List[Tuple[str, str]] = []
-        
+
         for token in userinput.split():
             if parseargs['resolve_aliases']:
                 for alias, actual in ALIASES.items():
@@ -79,7 +79,7 @@ class Parser:
 
         return candidates, alias_applied
 
-    
+
     @property
     def candidates(self) -> Tuple[List[str], Tuple[str, str]]:
         if not self.userinput:

@@ -34,11 +34,11 @@ def process_tags(taglist) -> Tuple[List, List, List, List]:
     veto = config.VETO
     floats = config.FLOATS
     sinks = config.SINKS
-    
+
     floated, regular, sunk, vetoed = [], [], [], []
     for tag in taglist:
         name = tag['name']
-        
+
         if name in veto:
             vetoed.append(tag)
             log.info(f'Discarding vetoed tag "{name}"')
@@ -87,7 +87,7 @@ async def smart_search(query, explicit_rating) -> List[Post]:
         rating = 's'
         if explicit_rating[-1] in ['e', 'q', 's']:
             rating = explicit_rating[-1]
-        
+
         add_to_search = f'rating:{rating}'
         if explicit_rating.startswith('-'):
             add_to_search = '-' + add_to_search
@@ -156,12 +156,12 @@ def pull_img_url(postid):
         r = requests.get(DAN_URL_STUB + '/posts/' + postid)
     if not r.ok:
         return ''
-    
+
     soup = BeautifulSoup(r.text, 'html.parser')
     img = soup.find('img', {'id': 'image'})
     if not img:
         return ''
-    
+
     img_url = img['src']
 
     return img_url

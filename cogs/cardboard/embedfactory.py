@@ -38,7 +38,7 @@ def make_post_title(post):
                 include_chars.append(char)
                 curr_len += (len(char) + len(', '))
                 unadded -= 1
-    
+
     char_string = ', '.join(include_chars)
     char_string = f'`{char_string}`' if char_string else ''
     title = f'{char_string}{artist}'
@@ -53,7 +53,7 @@ def make_embed(post, img_url, tags_str):
     embed = Embed(title=title,
                   color=DAN_COLOUR)
     embed.set_image(url=img_url)
-    
+
     artist = post['tag_string_artist'].split() or ['(none)']
     s = 's' if len(artist) > 1 else ''
     artist_val = '\n'.join(

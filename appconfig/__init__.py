@@ -14,7 +14,7 @@ def fetch(section, option=None, check_env=True, cast_to=None):
     def toupper(s):
         if s is None:
             return None
-        
+
         try:
             s = s.upper()
         except AttributeError:
@@ -24,14 +24,14 @@ def fetch(section, option=None, check_env=True, cast_to=None):
 
     # Convert args to uppercase
     section, option = [*map(toupper, [section, option])]
-    
+
     sec = cfg[section]
 
     if option == None:
         return sec
 
     env = None
-    
+
     if check_env:
         varname = f'{section}_{option}'.upper()
         env = os.environ.get(varname)

@@ -263,7 +263,7 @@ class KrSearchCog(commands.Cog):
         reacts = [r for r in message.reactions if r in PAGES_EMOJI.values()]
         return (not reacts)
 
-    
+
     @commands.Cog.listener()
     async def on_ready(self):
         if not self._autoupdate:
@@ -280,9 +280,9 @@ class KrSearchCog(commands.Cog):
                 and self.is_kr_embed(message)
                 and self.no_own_reacts(message)):
             return
-        
+
         embed = message.embeds[0]
-        
+
         emoji_to_add = (0, 5)
         if '/hero/' in embed.url:
             emoji_to_add = (0, 1, 2, 3, 4, 5)
@@ -299,7 +299,7 @@ class KrSearchCog(commands.Cog):
         if not (self.is_my_message(reaction.message)
                 and self.is_kr_embed(reaction.message)):
             return
-        
+
         embed = reaction.message.embeds[0]
 
         entity = kr.search(embed.title)

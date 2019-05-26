@@ -24,7 +24,7 @@ class TrackerCog(commands.Cog):
         self.bot = bot
 
         self.update_interval_secs = UPDATE_INTERVAL_SECS
-        
+
         self.aiohttp_timeout_secs = TIMEOUT_SECS
         self.aiohttp_session = aiohttp.ClientSession()
 

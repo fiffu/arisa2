@@ -1,4 +1,4 @@
-"""SoftDict.py
+"""softdict.py
 
 SoftDict extends dict by supporting "soft indexing", which allows looking up
 keys using their substrings or initials.

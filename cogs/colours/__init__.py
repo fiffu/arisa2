@@ -6,15 +6,17 @@ from datetime import datetime, timedelta
 import logging
 from random import random
 from types import SimpleNamespace
+from typing import Optional
 
 import discord
 from discord.ext import commands
 from discord.abc import GuildChannel
 
 from appconfig import DEBUGGING
-from utils.lastreleaselock import AsyncLastReleaseLock, NO_UPDATE
 from cogs.mixins import DatabaseCogMixin
+from utils.lastreleaselock import AsyncLastReleaseLock, NO_UPDATE
 from . import actions
+from .config import *
 
 
 log = logging.getLogger(__name__)
@@ -24,9 +26,10 @@ log = logging.getLogger(__name__)
 #REROLL_COOLDOWN_TIME = dict(days=1)
 MUTATE_COOLDOWN_TIME = dict(seconds=5)
 REROLL_COOLDOWN_TIME = dict(seconds=30)
+
 DB_UPDATE_TIMEOUT_SECS = 10
 
-
+MAX_HEIGHT_ROLE_NAME = '[Arisa] Max colour role height'
 
 # Use a cache factory makes it clear that two locks are created per key,
 # instead of two lock instances being shared across keys
@@ -46,7 +49,7 @@ def make_random_color(h=0, s=0.5, v=0.8):
 
 def get_role(member):
     for role in member.roles:
-        if role.name == str(member):
+        if role.name.lower() == str(member).lower():
             return role
     return None
 
@@ -61,16 +64,40 @@ async def mutate_role_colour(role: discord.Role, repeats=1):
 
 
 
+def get_max_colour_height(guild) -> Optional[int]:
+    for position, role in enumerate(guild.roles):
+        if role.name == MAX_HEIGHT_ROLE_NAME:
+            return position
+    return None
+
+
+async def setup_roles(guild):
+    if get_max_colour_height(guild) is None:
+        log.info('Setting up new colour role height limit for guild %s',
+                 guild.name)
+        await guild.create_role(name=MAX_HEIGHT_ROLE_NAME,
+                                colour=0xff0000,
+                                reason='Setup max height for colour roles')
+
+
 #class ColourCog(DatabaseCogMixin, commands.Cog):
 class ColourCog(DatabaseCogMixin, commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
 
-    async def _mutate(self, member, msgable, repeats=1, verbose=False):
+    @commands.Cog.listener()
+    async def on_ready(self):
+        for guild in self.bot.guilds:
+            await setup_roles(guild)
+
+        await super().on_ready()
+
+
+    async def _adjust_colour(self, member, msgable, repeats=1, verbose=False):
         if self.bot.user.id == member.id:
             return
-        
+
         username = str(member)
         role = get_role(member)
         colour = None
@@ -81,6 +108,7 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
                 name=username,
                 colour=colour,
                 reason='created new colour role as user had none')
+            await role.edit(position=get_max_colour_height(member.guild))
             await member.add_roles(role, reason='assign colour role')
         else:
             colour = await mutate_role_colour(role, repeats=repeats)
@@ -164,14 +192,15 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
 
     @commands.command()
     async def col(self, ctx):
-        member = ctx.message.author
-
-        if not isinstance(member, discord.Member):
+        if not ctx.guild:
             await ctx.send(content='This command only works on a server!')
             return
 
+        member = ctx.message.author
+
         lock = CACHE[member.id].reroll
         oldtime = lock.time or datetime(year=1970, month=1, day=1)
+
         if lock.elapsed(**REROLL_COOLDOWN_TIME):
             await self.update_db(member.id, 'reroll', lock)
 
@@ -183,7 +212,7 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
         if not updated:
             await ctx.send(content='You cannot reroll a new colour yet!')
         else:
-            await self._mutate(
+            await self._adjust_colour(
                 member, ctx, repeats=20, verbose=DEBUGGING and 'Rerolled')
 
 
@@ -191,13 +220,12 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
     async def uncol(self, ctx):
         if not DEBUGGING:
             return
-        member = ctx.message.author
 
-        if not isinstance(member, discord.Member):
+        if not ctx.guild:
             await ctx.send(content='This command only works on a server!')
             return
 
-        role = get_role(member)
+        role = get_role(ctx.message.author)
         if role:
             await role.delete()
 
@@ -206,12 +234,14 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
     async def on_message(self, message):
         if self.bot.user.id == message.author.id:
             # Don't colorize self
-            return 
-        
-        channel = message.channel
+            return
+
+        if not message.guild:
+            return
+
         member = message.author
 
-        if not isinstance(channel, discord.abc.GuildChannel):
+        if not get_role(member):
             return
 
         lock = CACHE[member.id].mutate
@@ -225,8 +255,11 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
             updated = True
 
         if updated:
-            await self._mutate(
-                member, channel, repeats=1, verbose=DEBUGGING and 'Mutated')
+            await self._adjust_colour(
+                member,
+                message.channel,
+                repeats=1,
+                verbose=DEBUGGING and 'Mutated')
 
 
     @commands.command()
@@ -241,15 +274,33 @@ class ColourCog(DatabaseCogMixin, commands.Cog):
 
     @commands.command()
     async def cool(self, ctx):
-        channel = ctx.channel
-        member = ctx.author
-
-        if not isinstance(channel, discord.abc.GuildChannel):
+        if not ctx.guild:
             return
 
+        member = ctx.author
         locks = CACHE[member.id]
         await ctx.send(content=
             f'Mutate: {str(locks.mutate.time)}, '
             f'usable={locks.mutate.elapsed(**MUTATE_COOLDOWN_TIME)}\n'
             f'Reroll: {str(locks.reroll.time)}, '
             f'usable={locks.reroll.elapsed(**REROLL_COOLDOWN_TIME)}')
+
+
+    @commands.command()
+    async def colyank(self, ctx):
+        guild = ctx.guild
+
+        if not guild:
+            await ctx.send(content='This command only works on a server!')
+            return
+
+        async with ctx.typing():
+            await setup_roles(guild)
+            max_height = get_max_colour_height(guild)
+            guild_member_names = [str(m) for m in guild.members]
+            for role in ctx.guild.roles.copy():
+                if role.name not in guild_member_names:
+                    continue
+                await role.edit(
+                    position=max_height,
+                    reason='!colyank: moving to anchor height')

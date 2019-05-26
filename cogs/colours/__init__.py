@@ -16,7 +16,6 @@ from appconfig import DEBUGGING
 from cogs.mixins import DatabaseCogMixin
 from utils.lastreleaselock import AsyncLastReleaseLock, NO_UPDATE
 from . import actions
-from .config import *
 
 
 log = logging.getLogger(__name__)

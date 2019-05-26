@@ -1,3 +1,8 @@
+"""main.py
+
+Main app entry point.
+"""
+
 import logging
 import sys
 
@@ -8,20 +13,20 @@ import appconfig
 
 DEBUGGING = appconfig.DEBUGGING
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
-# Setup logging to console
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setFormatter(
-    logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-stdout_handler.setLevel(logging.INFO)
-logger.addHandler(stdout_handler)
-
-prefix = appconfig.fetch('BOT', 'COMMAND_PREFIX')
-
 
 if __name__ == '__main__':
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    # Setup logging to console
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(
+        logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    stdout_handler.setLevel(logging.INFO)
+    logger.addHandler(stdout_handler)
+
+    prefix = appconfig.fetch('BOT', 'COMMAND_PREFIX')
+
     if DEBUGGING:
         logger.warning('Starting in debug mode.')
 
@@ -33,15 +38,15 @@ if __name__ == '__main__':
             cog = cog_cls(bot)  # instantiate cog class
             bot.add_cog(cog)
             num_cogs_loaded += 1
-            logger.info('Registered cog ' + cog.qualified_name)
+            logger.info('Registered cog %s', cog.qualified_name)
 
         except commands.CommandError as e:
-            logger.error('Failed to load cog: {}.{}'.format(
-                           cog.__module__, cog.__name__))
+            logger.error('Failed to load cog: %s.%s',
+                         cog.__module__, cog.__name__)
 
-    logger.info(f'Total of {num_cogs_loaded} cogs loaded')
+    logger.info('Total of %s cogs loaded', num_cogs_loaded)
 
     token = appconfig.fetch('DISCORD', 'BOT_TOKEN')
 
-    logger.info(f'Starting bot...')
+    logger.info('Starting bot...')
     bot.run(token)

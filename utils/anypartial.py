@@ -1,3 +1,11 @@
+"""anypartial.py
+
+anypartial()
+    Allows you to regular functions as well as coroutine functions (defined
+    either with `yield` or `async def`).
+"""
+
+
 from functools import partial
 import inspect
 
@@ -11,5 +19,3 @@ def anypartial(func, *args, **kwargs):
         wrapper.__module__ = func.__module__
         wrapper.__name__ = func.__name__
     return wrapper
-
-

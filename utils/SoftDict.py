@@ -1,5 +1,13 @@
-from utils import mash
+"""SoftDict.py
 
+SoftDict extends dict by supporting "soft indexing", which allows looking up
+keys using their substrings or initials.
+The keys used in a SoftDict must support string methods.
+"""
+
+from typing import Optional
+
+from utils import mash
 
 
 class SoftDict(dict):
@@ -81,12 +89,27 @@ class SoftDict(dict):
         raise KeyError(searching)
 
 
-    def find_key(self, attr, k, lower=False, exact=False, substring=False):
+    def find_key(self,
+                 attr: str,
+                 k: str,
+                 lower: bool = False,
+                 exact: bool = False,
+                 substring: bool = False) -> Optional[str]:
+        """Attempts to find a existing key that matches the input string.
+
+        Args:
+            attr: Either 'mashed' or 'initials'. If 'mashed', checks against
+                  mashed strings (lowercase strings with non-alnum characters
+                  removed)
+            k: The input string that we want to match to some existing key
+            lower: Check against unmashed actual keys set to lowercase
+            substring: Check against substrings of unmashed actual keys
+        """
         dattr = getattr(self, attr)
         for alias in sorted(dattr.keys()):
             actual = dattr[alias]
             if lower:
-              alias = alias.lower()
+                alias = alias.lower()
             if exact:
                 if k == alias:
                     return actual
@@ -105,4 +128,3 @@ class SoftDict(dict):
             return self[key]
         except KeyError:
             return default
-

@@ -203,7 +203,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='You cannot reroll a new colour yet!')
         else:
             await self._adjust_colour(
-                member, ctx, repeats=20, verbose=DEBUGGING and 'Rerolled')
+                member, ctx, repeats=20, verbose='Rolled new colour:')
 
 
     # @commands.command()

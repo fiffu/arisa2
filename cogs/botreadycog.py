@@ -6,7 +6,7 @@ from discord.ext import commands
 
 log = logging.getLogger(__name__)
 
-class BotReadyCog(commands.Cog):
+class BotReady(commands.Cog):
     """
     Cog that defines bot.on_ready behaviour
     """

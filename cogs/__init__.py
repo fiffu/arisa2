@@ -1,26 +1,26 @@
 import logging
 
 #from .debugcog import DebugCog
-from .botreadycog import BotReadyCog
+from .botreadycog import BotReady
 
-from .colours import ColourCog
-from .kingsraid.cog import KrSearchCog
-from .cardboard.cog import DanbooruCog
+from .colours import Colours
+from .kingsraid.cog import KrSearch
+from .cardboard.cog import DanbooruSearch
 
-from .publishsubscribecog import PublishSubscribeCog
-from .plugtracker.kingsraidcog import PlugKingsRaidCog
-from .plugtracker.browndustcog import PlugBrownDustCog
+from .publishsubscribecog import PublishSubscribe
+from .plugtracker.kingsraidcog import PlugKingsRaid
+from .plugtracker.browndustcog import PlugBrownDust
 
 
 log = logging.getLogger(__name__)
 
 ENABLED_COGS = [
     #DebugCog,
-    BotReadyCog,
-    ColourCog,
-    KrSearchCog,
-    DanbooruCog,
-    PublishSubscribeCog,
-    PlugKingsRaidCog,
-    PlugBrownDustCog,
+    BotReady,
+    Colours,
+    KrSearch,
+    DanbooruSearch,
+    PublishSubscribe,
+    PlugKingsRaid,
+    PlugBrownDust,
 ]

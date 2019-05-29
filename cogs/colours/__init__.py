@@ -71,8 +71,7 @@ async def setup_roles(guild):
                                 reason='Setup max height for colour roles')
 
 
-#class ColourCog(DatabaseCogMixin, commands.Cog):
-class ColourCog(DatabaseCogMixin, commands.Cog):
+class Colours(DatabaseCogMixin, commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

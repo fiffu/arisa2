@@ -17,7 +17,7 @@ from .texthelpers import codeblocked, make_two_cols
 FEEDBACK = FeedbackGetter(config.FEEDBACK)
 
 
-class DanbooruCog(commands.Cog):
+class DanbooruSearch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

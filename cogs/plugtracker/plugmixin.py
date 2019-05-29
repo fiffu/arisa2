@@ -134,10 +134,10 @@ class PlugMixin:
 
     @property
     def pubsubcog(self):
-        pscog = self.bot.get_cog('PublishSubscribeCog')
+        pscog = self.bot.get_cog('PublishSubscribe')
         if not pscog:
             mycls = self.__class__.__name__
-            log.warning('PublishSubscribeCog not found, please ensure that '
+            log.warning('PublishSubscribe not found, please ensure that '
                         f'it is loaded before {mycls} in cogs.__init__')
         return pscog
 
@@ -147,7 +147,7 @@ class PlugMixin:
         if self.pubsubcog:
             self.pubsubcog.register_cog_to_topic(self.topic, self)
         else:
-            log.warning(f'PublishSubscribeCog not found, failed to register '
+            log.warning(f'PublishSubscribe not found, failed to register '
                         f'topic "{self.topic}"')
 
 
@@ -156,7 +156,7 @@ class PlugMixin:
         pscog = self.pubsubcog
 
         if not pscog:
-            log.warning(f'PublishSubscribeCog not found, unable to publish '
+            log.warning(f'PublishSubscribe not found, unable to publish '
                         f'"{self.topic}" announces to channels')
             return
 

@@ -22,7 +22,7 @@ URLS = {
 }
 
 
-class PlugKingsRaidCog(PlugMixin, TrackerCog):
+class PlugKingsRaid(PlugMixin, TrackerCog):
     @property
     def plug_forum_name_urls(self) -> Mapping[str, str]:
         """Mapping[forumName, forumUrl]"""

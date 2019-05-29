@@ -222,7 +222,7 @@ def create_embed(obj, page=0):
 
 
 
-class KrSearchCog(commands.Cog):
+class KrSearch(commands.Cog):
     """
     Cog that defines bot.on_ready behaviour
     """

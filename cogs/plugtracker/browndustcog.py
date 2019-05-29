@@ -20,7 +20,7 @@ URLS = {
 }
 
 
-class PlugBrownDustCog(PlugMixin, TrackerCog):
+class PlugBrownDust(PlugMixin, TrackerCog):
     @property
     def plug_forum_name_urls(self) -> Mapping[str, str]:
         """Mapping[forumName, forumUrl]"""

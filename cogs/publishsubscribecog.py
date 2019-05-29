@@ -22,7 +22,7 @@ class NotChannelError(ValueError):
     pass
 
 
-class PublishSubscribeCog(DatabaseCogMixin, commands.Cog):
+class PublishSubscribe(DatabaseCogMixin, commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.topics = defaultdict(list)

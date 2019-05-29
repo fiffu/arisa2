@@ -29,8 +29,8 @@ DEBUGGING=0
 # https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 #
 # For simplicity, it is recommended that you use DSNs, which are URIs that
-# begin with "postgresql://..."
-DSN=
+# begin with "postgres://..."
+URL=
 
 [DISCORD]
 BOT_TOKEN=

@@ -36,7 +36,7 @@ def fetch(section, option=None, check_env=True, cast_to=None):
         varname = f'{section}_{option}'.upper()
         env = os.environ.get(varname)
 
-    value = sec.get(option, env)
+    value = sec.get(option) or env
 
     if value.isnumeric():
         value = float(value)
@@ -47,4 +47,3 @@ def fetch(section, option=None, check_env=True, cast_to=None):
     return value
 
 DEBUGGING = fetch('BOT', 'DEBUGGING', cast_to=bool)
-

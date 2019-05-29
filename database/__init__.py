@@ -9,10 +9,10 @@ import appconfig
 log = logging.getLogger(__name__)
 
 
-DSN = appconfig.fetch('DATABASE', 'DSN')
+URL = appconfig.fetch('DATABASE', 'URL')
 
 DEFAULT_POOL_ARGS = {
-    'dsn': DSN,
+    'dsn': URL,
 }
 
 POOL = None
@@ -39,7 +39,7 @@ async def setup_pool(**kwargs):
             log.info('Database connection initialized.')
 
     except Exception as e:
-        log.error('Failed to setup database connection pool: {e}')
+        log.error('Failed to setup database connection pool: %s', e)
         log.exception(e)
         raise e
 

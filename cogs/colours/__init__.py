@@ -206,18 +206,18 @@ class Colours(DatabaseCogMixin, commands.Cog):
                 member, ctx, repeats=20, verbose=DEBUGGING and 'Rerolled')
 
 
-    @commands.command()
-    async def uncol(self, ctx):
-        if not DEBUGGING:
-            return
+    # @commands.command()
+    # async def uncol(self, ctx):
+    #     if not DEBUGGING:
+    #         return
 
-        if not ctx.guild:
-            await ctx.send(content='This command only works on a server!')
-            return
+    #     if not ctx.guild:
+    #         await ctx.send(content='This command only works on a server!')
+    #         return
 
-        role = get_role(ctx.message.author)
-        if role:
-            await role.delete()
+    #     role = get_role(ctx.message.author)
+    #     if role:
+    #         await role.delete()
 
 
     @commands.Cog.listener()
@@ -269,7 +269,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
 
     @commands.command()
-    async def cool(self, ctx):
+    async def cooldown(self, ctx):
         if not ctx.guild:
             return
 

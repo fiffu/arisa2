@@ -2,6 +2,7 @@ import logging
 
 #from .debugcog import DebugCog
 from .botreadycog import BotReady
+from .generalcog import General
 
 from .colours import Colours
 from .kingsraid.cog import KrSearch
@@ -17,6 +18,7 @@ log = logging.getLogger(__name__)
 ENABLED_COGS = [
     #DebugCog,
     BotReady,
+    General,
     Colours,
     KrSearch,
     DanbooruSearch,

@@ -1,7 +1,8 @@
 import logging
+from random import randint
 import re
+import urllib.parse
 
-import discord
 from discord.ext import commands
 import requests
 
@@ -48,7 +49,9 @@ class General(commands.Cog):
             M=mod or ''
         )
 
-        if (dice, sides, mod) == ROLL_DEFAULT:
+        if (dice, sides, mod) == (DEFAULT_ROLL_DICE_COUNT,
+                                  DEFAULT_ROLL_SIDES,
+                                  DEFAULT_ROLL_MODIFIER):
             formatted = '0-99'
 
         msg = f"Rolling {formatted}: **{res}**"

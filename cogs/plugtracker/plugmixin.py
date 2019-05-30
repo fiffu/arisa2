@@ -66,7 +66,7 @@ class PlugPost(object):
     def timestamp(self) -> datetime.datetime:
         def parse_time(time_str):
             for short, full in [
-                ('mins', 'min')
+                ('mins', 'min'),
                 ('hr', 'hour'),
                 ('wk', 'week'),
                 ('yr', 'year'),

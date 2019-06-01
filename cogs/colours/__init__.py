@@ -33,6 +33,10 @@ CACHE = defaultdict(locks_factory)
 
 
 
+def to_hexcode(r, g, b) -> str:
+    return ''.join(f'{hex(n)[2:]:>02}' for n in [r, g, b])
+
+
 def make_random_color(h=0, s=0.5, v=0.8):
     h, s, v = actions.mutate_hsv(h or random(), s, v, repeats=0)
     return discord.Colour.from_hsv(h, s, v)
@@ -110,17 +114,47 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         if verbose:
             r, g, b = colour.to_rgb()
-            hexa = ''.join(f'{hex(n)[2:]:>02}' for n in [r, g, b])
+            hexa = to_hexcode(r, g, b)
             embed = discord.Embed(title=f'#{hexa} · rgb({r}, {g}, {b})',
                                   colour=colour)
             content = verbose if isinstance(verbose, str) else None
             await msgable.send(content=content, embed=embed)
 
 
-    async def update_db(self,
-                        memberid: int,
-                        mutate_or_reroll,
-                        lock: AsyncLastReleaseLock):
+    async def _freeze_colour(self, member, msgable, set_to=True):
+        role = get_role(member)
+
+        if not role:
+            await msgable.send("You don't even have a colour role...")
+            return
+
+        await self.db_freeze_colour(member.id, set_to)
+        
+        if set_to == True:
+            r, g, b = role.colour.to_rgb()
+            hexa = to_hexcode(r, g, b)
+            content = "Your colour has been locked to:"
+            embed = discord.Embed(title=f'#{hexa} · rgb({r}, {g}, {b})',
+                                  colour=role.colour)
+            await msgable.send(content=content, embed=embed)
+        else:
+            await msgable.send(content="Enabled mutation for your colour.")
+
+
+    async def _is_colour_mutable(self, memberid: int) -> bool:
+        sql_isfrozen = """SELECT * FROM colours 
+                          WHERE userid = %s AND mutateorreroll = %s
+                          AND is_frozen = %s"""
+        rows = await self.db_query(sql_isfrozen,
+                                   [memberid, 'mutate', True])
+        
+        return True if rows else False
+
+
+    async def db_adjust_colour(self,
+                               memberid: int,
+                               mutate_or_reroll,
+                               lock: AsyncLastReleaseLock):
 
         async def _update(newtime):
             cooldown = dict(mutate=MUTATE_COOLDOWN_TIME,
@@ -180,6 +214,36 @@ class Colours(DatabaseCogMixin, commands.Cog):
                 lock.release(time=newtime)
 
 
+    async def db_freeze_colour(self, memberid: int, set_to: bool) -> bool:
+        sql_get = f"""SELECT * FROM colours WHERE userid = %s"""
+        rows = await self.db_query(sql_get, [memberid])
+        
+        if not rows:
+            return False
+
+        last_mutate = None
+        for row in rows:
+            if row['mutateorreroll'] == 'mutate':
+                last_mutate = row['tstamp']
+
+        # Update row if there's a record of last mutate time,
+        if last_mutate:
+            sql_update = f"""UPDATE colours SET is_frozen = %s
+                             WHERE userid = %s AND mutateorreroll = %s"""
+            await self.db_query(sql_update, [set_to, memberid, 'mutate'])
+
+        # or insert new row if there's no record
+        else:
+            newtime = datetime.utcnow()
+            sql_insert = f"""INSERT INTO colours
+                                 (userid, mutateorreroll, tstamp, is_frozen)
+                             VALUES (%s, %s, %s, %s)"""
+            await self.db_execute(
+                sql_insert, [memberid, mutate_or_reroll, newtime, True])
+
+        return True
+
+
     @commands.command()
     async def col(self, ctx):
         if not ctx.guild:
@@ -192,7 +256,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         oldtime = lock.time or datetime(year=1970, month=1, day=1)
 
         if lock.elapsed(**REROLL_COOLDOWN_TIME):
-            await self.update_db(member.id, 'reroll', lock)
+            await self.db_adjust_colour(member.id, 'reroll', lock)
 
         # Test if lock.time increased, indicating successful update
         updated = False
@@ -204,6 +268,26 @@ class Colours(DatabaseCogMixin, commands.Cog):
         else:
             await self._adjust_colour(
                 member, ctx, repeats=20, verbose='Rolled new colour:')
+
+
+    @commands.command()
+    async def freeze(self, ctx):
+        if not ctx.guild:
+            await ctx.send(content='This command only works on a server!')
+            return
+
+        member = ctx.message.author
+        await self._freeze_colour(member, ctx, set_to=True)
+
+
+    @commands.command()
+    async def unfreeze(self, ctx):
+        if not ctx.guild:
+            await ctx.send(content='This command only works on a server!')
+            return
+
+        member = ctx.message.author
+        await self._freeze_colour(member, ctx, set_to=False)
 
 
     # @commands.command()
@@ -240,10 +324,14 @@ class Colours(DatabaseCogMixin, commands.Cog):
         if not get_role(member):
             return
 
+        mutable = await self._is_colour_mutable(member.id)
+        if not mutable:
+            return
+
         lock = CACHE[member.id].mutate
         oldtime = lock.time or datetime(year=1970, month=1, day=1)
         if lock.elapsed(**MUTATE_COOLDOWN_TIME):
-            await self.update_db(member.id, 'mutate', lock)
+            await self.db_adjust_colour(member.id, 'mutate', lock)
 
         # Test if lock.time increased, indicating successful update
         updated = False

@@ -2,7 +2,7 @@
 
 import asyncio
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from random import random
 from types import SimpleNamespace
@@ -164,7 +164,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             # Release and cache the provided timestamp if all goes well
             lock.release(newtime)
 
-        newtime = datetime.now()
+        newtime = datetime.utcnow()
         if mutate_or_reroll not in ['mutate', 'reroll']:
             raise ValueError("arg 'mutate_or_reroll' must be either "
                              "str('mutate') or str('reroll')")

@@ -66,7 +66,7 @@ class DanbooruSearch(commands.Cog):
 
         msgs = []
 
-        candstr = (f'was converted into the tag candidate string {cand}, '
+        candstr = (f'was converted into the tag candidate string `{cand}`, '
                    'which ') if cand != query else ''
 
         msgs.append(f'Your query for `{query}` {candstr}will resolve to:\n'
@@ -99,6 +99,7 @@ class DanbooruSearch(commands.Cog):
 
     async def search(self, ctx, query, explicit_rating):
         await ctx.trigger_typing()
+        query = query.lower()
         posts, search_string = await smart_search(query, explicit_rating)
         selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
 

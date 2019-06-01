@@ -49,10 +49,10 @@ def get_role(member):
     return None
 
 
-async def mutate_role_colour(role: discord.Role, repeats=1):
+async def mutate_role_colour(role: discord.Role, steps=1):
     r, g, b = role.colour.to_rgb()
     r, g, b = [x / 255 for x in (r, g, b)]
-    r, g, b = actions.mutate_rgb(r, g, b, repeats=repeats)
+    r, g, b = actions.mutate_rgb(r, g, b, repeats=steps)
     r, g, b = [int(x * 255) for x in (r, g, b)]
     newcol = discord.Colour.from_rgb(r, g, b)
     return newcol
@@ -88,7 +88,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         await super().on_ready()
 
 
-    async def _adjust_colour(self, member, msgable, repeats=1, verbose=False):
+    async def _adjust_colour(self, member, msgable, steps=1, verbose=False):
         if self.bot.user.id == member.id:
             return
 
@@ -96,6 +96,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         role = get_role(member)
         colour = None
 
+        # If no role, make new from random colour
         if not role:
             colour = make_random_color()
             role = await member.guild.create_role(
@@ -104,15 +105,19 @@ class Colours(DatabaseCogMixin, commands.Cog):
                 reason='created new colour role as user had none')
             await role.edit(position=get_max_colour_height(member.guild))
             await member.add_roles(role, reason='assign colour role')
+
+        # Mutate by `steps` steps
         else:
-            if repeats == 0:
-                colour = make_random_color()
-            else:
-                colour = await mutate_role_colour(role, repeats=repeats)
             oldcol = 'rgb({}, {}, {})'.format(*role.colour.to_rgb())
+            reason = f'Mutate colour {steps} steps, was: {oldcol}'
+            if steps == 0:
+                colour = make_random_color()
+                reason = "Reroll new colour, was: {oldcol}"
+            else:
+                colour = await mutate_role_colour(role, steps=steps)
             await role.edit(
                 colour=colour,
-                reason=f'Mutate colour {repeats} steps, was: {oldcol}'
+                reason=reason
             )
 
         if verbose:
@@ -132,7 +137,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             return
 
         await self.db_freeze_colour(member.id, set_to)
-        
+
         if set_to == True:
             r, g, b = role.colour.to_rgb()
             hexa = to_hexcode(r, g, b)
@@ -145,12 +150,12 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
 
     async def _is_colour_mutable(self, memberid: int) -> bool:
-        sql_isfrozen = """SELECT * FROM colours 
+        sql_isfrozen = """SELECT * FROM colours
                           WHERE userid = %s AND mutateorreroll = %s
                           AND is_frozen = %s"""
         rows = await self.db_query(sql_isfrozen,
                                    [memberid, 'mutate', True])
-        
+
         return True if rows else False
 
 
@@ -220,7 +225,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
     async def db_freeze_colour(self, memberid: int, set_to: bool) -> bool:
         sql_get = f"""SELECT * FROM colours WHERE userid = %s"""
         rows = await self.db_query(sql_get, [memberid])
-        
+
         if not rows:
             return False
 
@@ -267,10 +272,19 @@ class Colours(DatabaseCogMixin, commands.Cog):
             updated = True
 
         if not updated:
-            await ctx.send(content='You cannot reroll a new colour yet!')
+            delta_cooldown = timedelta(**REROLL_COOLDOWN_TIME)
+            delta_remain = delta_cooldown - lock.time_since_last_release()
+            hours, remainder = divmod(delta_remain.total_seconds(), 60 * 60)
+            mins, secs = divmod(remainder, 60)
+            h = f'{int(hours)}hr ' if int(hours) else ''
+            m = f'{int(mins)}min ' if int(mins) else ''
+            s = '' if any([h, m]) else f'{secs:.2f}sec '
+            msg = ('You cannot reroll a new colour yet!\n'
+                   f'Cooldown remaining: {h}{m}{s}')
+            await ctx.send(content=msg)
         else:
             await self._adjust_colour(
-                member, ctx, repeats=0, verbose='Rolled new colour:')
+                member, ctx, steps=0, verbose='Rolled new colour:')
 
 
     @commands.command()
@@ -345,7 +359,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await self._adjust_colour(
                 member,
                 message.channel,
-                repeats=1,
+                steps=1,
                 verbose=DEBUGGING and 'Mutated')
 
 

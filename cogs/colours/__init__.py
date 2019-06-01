@@ -258,6 +258,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='This command only works on a server!')
             return
 
+        await ctx.trigger_typing()
         member = ctx.message.author
 
         lock = CACHE[member.id].reroll
@@ -290,6 +291,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='This command only works on a server!')
             return
 
+        await ctx.trigger_typing()
         member = ctx.message.author
         await self._freeze_colour(member, ctx, set_to=True)
 
@@ -300,6 +302,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='This command only works on a server!')
             return
 
+        await ctx.trigger_typing()
         member = ctx.message.author
         await self._freeze_colour(member, ctx, set_to=False)
 

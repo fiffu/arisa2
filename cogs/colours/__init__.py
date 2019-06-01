@@ -105,7 +105,10 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await role.edit(position=get_max_colour_height(member.guild))
             await member.add_roles(role, reason='assign colour role')
         else:
-            colour = await mutate_role_colour(role, repeats=repeats)
+            if repeats == 0:
+                colour = make_random_color()
+            else:
+                colour = await mutate_role_colour(role, repeats=repeats)
             oldcol = 'rgb({}, {}, {})'.format(*role.colour.to_rgb())
             await role.edit(
                 colour=colour,
@@ -267,7 +270,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='You cannot reroll a new colour yet!')
         else:
             await self._adjust_colour(
-                member, ctx, repeats=20, verbose='Rolled new colour:')
+                member, ctx, repeats=0, verbose='Rolled new colour:')
 
 
     @commands.command()

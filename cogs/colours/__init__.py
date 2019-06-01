@@ -187,7 +187,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             if not proceed:
                 # Release and cache the more recent time from the db
                 lock.release(lasttime)
-                return
+                return False
 
             # Upsert the new time
             sql_delete = f"""DELETE FROM colours
@@ -205,6 +205,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
             # Release and cache the provided timestamp if all goes well
             lock.release(newtime)
+            return True
 
         newtime = datetime.utcnow()
         if mutate_or_reroll not in ['mutate', 'reroll']:
@@ -212,7 +213,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
                              "str('mutate') or str('reroll')")
 
         try:
-            await asyncio.wait_for(_update(newtime), DB_UPDATE_TIMEOUT_SECS)
+            return await asyncio.wait_for(_update(newtime), DB_UPDATE_TIMEOUT_SECS)
         except asyncio.TimeoutError:
             log.error(f'DB update timed out (set {mutate_or_reroll} for '
                       f'memberid {memberid} to time {newtime}')
@@ -220,6 +221,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         finally:
             if lock.locked():
                 lock.release(time=newtime)
+        return False
 
 
     async def db_freeze_colour(self, memberid: int, set_to: bool) -> bool:
@@ -262,22 +264,21 @@ class Colours(DatabaseCogMixin, commands.Cog):
         member = ctx.message.author
 
         lock = CACHE[member.id].reroll
-        oldtime = lock.time or datetime(year=1970, month=1, day=1)
+        proceed = False
 
         if lock.elapsed(**REROLL_COOLDOWN_TIME):
-            await self.db_adjust_colour(member.id, 'reroll', lock)
+            proceed = await self.db_adjust_colour(member.id, 'reroll', lock)
 
         # Test again if cooldown elapsed
-        if not lock.elapsed(**REROLL_COOLDOWN_TIME):
+        if not proceed:
             delta_cooldown = timedelta(**REROLL_COOLDOWN_TIME)
             delta_remain = delta_cooldown - lock.time_since_last_release()
             hours, remainder = divmod(delta_remain.total_seconds(), 60 * 60)
             mins, secs = divmod(remainder, 60)
             h = f'{int(hours)}hr ' if int(hours) else ''
             m = f'{int(mins)}min ' if int(mins) else ''
-            s = '' if any([h, m]) else f'{secs:.2f}sec '
-            msg = ('You cannot reroll a new colour yet!\n'
-                   f'Cooldown remaining: {h}{m}{s}')
+            s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec'
+            msg = f'You cannot reroll a new colour yet! ({h}{m}{s})'
             await ctx.send(content=msg)
 
         else:

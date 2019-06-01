@@ -112,7 +112,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             reason = f'Mutate colour {steps} steps, was: {oldcol}'
             if steps == 0:
                 colour = make_random_color()
-                reason = "Reroll new colour, was: {oldcol}"
+                reason = f"Reroll new colour, was: {oldcol}"
             else:
                 colour = await mutate_role_colour(role, steps=steps)
             await role.edit(

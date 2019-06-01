@@ -277,8 +277,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
             mins, secs = divmod(remainder, 60)
             h = f'{int(hours)}hr ' if int(hours) else ''
             m = f'{int(mins)}min ' if int(mins) else ''
-            s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec'
-            msg = f'You cannot reroll a new colour yet! ({h}{m}{s})'
+            s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec '
+            hms = f'{h}{m}{s}'.strip()
+            msg = f'You cannot reroll a new colour yet! ({hms})'
             await ctx.send(content=msg)
 
         else:

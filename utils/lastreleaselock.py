@@ -16,14 +16,14 @@ Example:
         alock = alock or AsyncLastReleaseLock()
         async with lock.acquire():
             do_something()
-            # Implicit release, release_time is set to datetime.now()
+            # Implicit release, release_time is set to datetime.utcnow()
 
         await asyncio.sleep(3)
         if alock.elapsed(seconds=3):
             lock.acquire()
             do_something()
             # Set a defined datetime object as the release time
-            await lock.release(time=datetime.now())
+            await lock.release(time=datetime.utcnow())
 
 The exact time that is cached
 """
@@ -58,7 +58,7 @@ class AsyncLastReleaseLock(Lock):
 
         The argument to `time` controls how the self.last_release_time
         attribute will be updated:
-            None      -- last_release_time will be set to datetime.now()
+            None      -- last_release_time will be set to datetime.utcnow()
             datetime  -- last_release_time will be set to the given datetime
             NO_UPDATE -- last_release_time won't be updated
         """
@@ -67,7 +67,7 @@ class AsyncLastReleaseLock(Lock):
         if time is NO_UPDATE:
             return
 
-        self.last_release_time = time or datetime.now()
+        self.last_release_time = time or datetime.utcnow()
 
 
     def update(self, time: Union[datetime, str, None] = 'now'):
@@ -75,10 +75,10 @@ class AsyncLastReleaseLock(Lock):
 
         Args:
             time: The datetime to set to; if 'now' then a datetime object
-                  returned from datetime.now(). Use None to clear the cached
+                  returned from datetime.utcnow(). Use None to clear the cached
                   time.
         """
-        time = datetime.now() if time is 'now' else time
+        time = datetime.utcnow() if time is 'now' else time
         self.time = time
 
 
@@ -87,7 +87,7 @@ class AsyncLastReleaseLock(Lock):
         """
         if self.last_release_time is None:
             return None
-        return datetime.now() - self.last_release_time
+        return datetime.utcnow() - self.last_release_time
 
 
     def has_elapsed_since_last_release(self, *args, **kwargs):
@@ -97,7 +97,7 @@ class AsyncLastReleaseLock(Lock):
         if reltime is None:
             return True
 
-        delta_since_rel = datetime.now() - reltime
+        delta_since_rel = datetime.utcnow() - reltime
         delta = timedelta(*args, **kwargs)
         return delta_since_rel >= delta
 

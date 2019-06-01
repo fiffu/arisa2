@@ -266,12 +266,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
         if lock.elapsed(**REROLL_COOLDOWN_TIME):
             await self.db_adjust_colour(member.id, 'reroll', lock)
 
-        # Test if lock.time increased, indicating successful update
-        updated = False
-        if lock.time and (lock.time > oldtime):
-            updated = True
-
-        if not updated:
+        # Test again if cooldown elapsed
+        if not lock.elapsed(**REROLL_COOLDOWN_TIME):
             delta_cooldown = timedelta(**REROLL_COOLDOWN_TIME)
             delta_remain = delta_cooldown - lock.time_since_last_release()
             hours, remainder = divmod(delta_remain.total_seconds(), 60 * 60)
@@ -282,6 +278,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             msg = ('You cannot reroll a new colour yet!\n'
                    f'Cooldown remaining: {h}{m}{s}')
             await ctx.send(content=msg)
+
         else:
             await self._adjust_colour(
                 member, ctx, steps=0, verbose='Rolled new colour:')

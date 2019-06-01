@@ -182,7 +182,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
                 if (newtime - lasttime) > timedelta(**cooldown):
                     proceed = True
             else:
-                proceed = True
+                proceed = False
 
             if not proceed:
                 # Release and cache the more recent time from the db
@@ -213,7 +213,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
                              "str('mutate') or str('reroll')")
 
         try:
-            return await asyncio.wait_for(_update(newtime), DB_UPDATE_TIMEOUT_SECS)
+            return await asyncio.wait_for(
+                _update(newtime), DB_UPDATE_TIMEOUT_SECS)
         except asyncio.TimeoutError:
             log.error(f'DB update timed out (set {mutate_or_reroll} for '
                       f'memberid {memberid} to time {newtime}')
@@ -279,7 +280,10 @@ class Colours(DatabaseCogMixin, commands.Cog):
             m = f'{int(mins)}min ' if int(mins) else ''
             s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec '
             hms = f'{h}{m}{s}'.strip()
-            msg = f'You cannot reroll a new colour yet! ({hms})'
+            spl = '||`' if random() < 0.3 else ''
+            spr = spl and '`||' or ''
+            u = '_' if spl and random() < 0.5 else 'u'
+            msg = f'You cannot reroll a new colo{spl}{u}{spr}r yet! ({hms})'
             await ctx.send(content=msg)
 
         else:

@@ -112,7 +112,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             reason = f'Mutate colour {steps} steps, was: {oldcol}'
             if steps == 0:
                 colour = make_random_color()
-                reason = "Reroll new colour, was: {oldcol}"
+                reason = f"Reroll new colour, was: {oldcol}"
             else:
                 colour = await mutate_role_colour(role, steps=steps)
             await role.edit(
@@ -280,10 +280,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
             m = f'{int(mins)}min ' if int(mins) else ''
             s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec '
             hms = f'{h}{m}{s}'.strip()
-            spl = '||`' if random() < 0.3 else ''
-            spr = spl and '`||' or ''
-            u = '_' if spl and random() < 0.5 else 'u'
-            msg = f'You cannot reroll a new colo{spl}{u}{spr}r yet! ({hms})'
+            u = '' if random() < 0.5 else 'u'
+            msg = f'You cannot reroll a new colo{u}r yet! ({hms})'
             await ctx.send(content=msg)
 
         else:

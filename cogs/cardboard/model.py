@@ -62,7 +62,8 @@ def process_tags(taglist) -> Tuple[List, List, List, List]:
 
 
 async def fetch_tag_matches(candidate: str) -> Tuple[List, List, List, List]:
-    if not candidate.endswith('*'):
+    taglist = client.tag_list(candidate)
+    if (not taglist) and (not candidate.endswith('*')):
         candidate += '*'
     taglist = client.tag_list(candidate)
     return process_tags(taglist)

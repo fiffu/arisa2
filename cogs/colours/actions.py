@@ -2,7 +2,7 @@ from colorsys import rgb_to_hsv, hsv_to_rgb
 from random import random, uniform
 
 
-def fiddle(n, max_dist=0.05, min_dist=0):
+def fiddle(n, max_dist=0.2, min_dist=0):
     diff = uniform(min_dist, max_dist)
     diff *= -(random() > 0.5) or 1
     return n + diff

@@ -4,7 +4,7 @@ import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import logging
-from random import random
+from random import random, uniform
 from types import SimpleNamespace
 from typing import Optional
 
@@ -38,8 +38,8 @@ def to_hexcode(r, g, b) -> str:
 
 
 def make_random_color(h=0, s=0.5, v=0.8):
-    s = s*random.uniform(0.9,1.1)
-    v = v*random.uniform(0.9,1.1)
+    s = s * uniform(0.9,1.1)
+    v = v * uniform(0.9,1.1)
     h, s, v = actions.mutate_hsv(h or random(), s, v, repeats=0)
     return discord.Colour.from_hsv(h, s, v)
 

@@ -1,4 +1,4 @@
-MUTATE_COOLDOWN_TIME = dict(hours=1)
+MUTATE_COOLDOWN_TIME = dict(hours=3)
 REROLL_COOLDOWN_TIME = dict(hours=13)
 # MUTATE_COOLDOWN_TIME = dict(seconds=5)
 # REROLL_COOLDOWN_TIME = dict(seconds=30)

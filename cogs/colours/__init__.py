@@ -33,9 +33,6 @@ CACHE = defaultdict(locks_factory)
 
 
 
-def to_hexcode(r, g, b) -> str:
-    return ''.join(f'{hex(n)[2:]:>02}' for n in [r, g, b])
-
 
 def make_random_color(h=0, s=0.5, v=0.8):
     s = s * uniform(0.9,1.1)
@@ -219,7 +216,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
                 _update(newtime), DB_UPDATE_TIMEOUT_SECS)
         except asyncio.TimeoutError:
             log.error(f'DB update timed out (set {mutate_or_reroll} for '
-                      f'memberid {memberid} to time {newtime}')
+                      f'memberid {memberid} to time {newtime})')
             newtime = NO_UPDATE  #  ensure lock's cached time won't be updated
         finally:
             if lock.locked():
@@ -252,7 +249,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
                                  (userid, mutateorreroll, tstamp, is_frozen)
                              VALUES (%s, %s, %s, %s)"""
             await self.db_execute(
-                sql_insert, [memberid, mutate_or_reroll, newtime, True])
+                sql_insert, [memberid, 'mutate', newtime, True])
 
         return True
 
@@ -308,7 +305,6 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content='This command only works on a server!')
             return
 
-        await ctx.trigger_typing()
         member = ctx.message.author
         await self._freeze_colour(member, ctx, set_to=False)
 
@@ -393,7 +389,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             f'usable={locks.reroll.elapsed(**REROLL_COOLDOWN_TIME)}')
 
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def colyank(self, ctx):
         guild = ctx.guild
 

@@ -39,7 +39,9 @@ FLOATS = (
     '(fate/grand_order)',
     '(epic7)',
     '(shadowverse)',
+    '(idolmaster)',
     '(crash_fever)',
+    '(kantai_collection)',
 )
 
 

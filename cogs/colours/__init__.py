@@ -327,56 +327,56 @@ class Colours(DatabaseCogMixin, commands.Cog):
     #         await role.delete()
 
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if self.bot.user.id == message.author.id:
-            # Don't colorize self
-            return
+    # @commands.Cog.listener()
+    # async def on_message(self, message):
+    #     if self.bot.user.id == message.author.id:
+    #         # Don't colorize self
+    #         return
 
-        if message.content.startswith(self.bot.command_prefix):
-            # Block mutation from command invocations
-            # Seems to lead to race conditions causing interference in
-            # executing some commands (such as !uncol)
-            return
+    #     if message.content.startswith(self.bot.command_prefix):
+    #         # Block mutation from command invocations
+    #         # Seems to lead to race conditions causing interference in
+    #         # executing some commands (such as !uncol)
+    #         return
 
-        if not message.guild:
-            return
+    #     if not message.guild:
+    #         return
 
-        member = message.author
+    #     member = message.author
 
-        if not get_role(member):
-            return
+    #     if not get_role(member):
+    #         return
 
-        mutable = await self._is_colour_mutable(member.id)
-        if not mutable:
-            return
+    #     mutable = await self._is_colour_mutable(member.id)
+    #     if not mutable:
+    #         return
 
-        lock = CACHE[member.id].mutate
-        oldtime = lock.time or datetime(year=1970, month=1, day=1)
-        if lock.elapsed(**MUTATE_COOLDOWN_TIME):
-            await self.db_adjust_colour(member.id, 'mutate', lock)
+    #     lock = CACHE[member.id].mutate
+    #     oldtime = lock.time or datetime(year=1970, month=1, day=1)
+    #     if lock.elapsed(**MUTATE_COOLDOWN_TIME):
+    #         await self.db_adjust_colour(member.id, 'mutate', lock)
 
-        # Test if lock.time increased, indicating successful update
-        updated = False
-        if lock.time and (lock.time > oldtime):
-            updated = True
+    #     # Test if lock.time increased, indicating successful update
+    #     updated = False
+    #     if lock.time and (lock.time > oldtime):
+    #         updated = True
 
-        if updated:
-            await self._adjust_colour(
-                member,
-                message.channel,
-                steps=1,
-                verbose=DEBUGGING and 'Mutated')
-
-
-    @commands.command()
-    async def color(self, ctx):
-        await self.col(ctx)
+    #     if updated:
+    #         await self._adjust_colour(
+    #             member,
+    #             message.channel,
+    #             steps=1,
+    #             verbose=DEBUGGING and 'Mutated')
 
 
-    @commands.command()
-    async def colour(self, ctx):
-        await self.col(ctx)
+    # @commands.command()
+    # async def color(self, ctx):
+    #     await self.col(ctx)
+
+
+    # @commands.command()
+    # async def colour(self, ctx):
+    #     await self.col(ctx)
 
 
     @commands.command()
@@ -393,7 +393,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
             f'usable={locks.reroll.elapsed(**REROLL_COOLDOWN_TIME)}')
 
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def colyank(self, ctx):
         guild = ctx.guild
 

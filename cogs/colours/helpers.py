@@ -1,5 +1,13 @@
 from colorsys import rgb_to_hsv, hsv_to_rgb
+import json
+import os
 from random import random, uniform
+
+from utils.snippets import getabsdir
+
+
+COL_NAME_CACHE = dict()
+COL_NAME_FILE = os.path.join(getabsdir(__file__), 'colours.json')
 
 
 def fiddle(n, max_dist=0.2, min_dist=0):
@@ -37,3 +45,20 @@ def mutate_rgb(r, g, b, repeats=1):
     h, s, v = rgb_to_hsv(r, g, b)
     h, s, v = _mutate(h, s, v, repeats)
     return hsv_to_rgb(h, s, v)
+
+
+def to_hexcode(r, g, b) -> str:
+    return ''.join(f'{hex(n)[2:]:>02}' for n in [r, g, b])
+
+
+def init_name_cache():
+    with open(COL_NAME_FILE, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        COL_NAME_CACHE = {tuple(k.split(',')): v
+                          for k, v in data.items()}
+
+
+def get_colour_name(r, g, b):
+    if not COL_NAME_CACHE.get('setup'):
+        init_name_cache()
+    return COL_NAME_CACHE.get((r, g, b))

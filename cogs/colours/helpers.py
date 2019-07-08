@@ -1,11 +1,13 @@
 from colorsys import rgb_to_hsv, hsv_to_rgb
+import json
+import os
 from random import random, uniform
 
-from bs4 import BeautifulSoup
-import requests
+from utils.snippets import getabsdir
 
 
 COL_NAME_CACHE = dict()
+COL_NAME_FILE = os.path.join(getabsdir(__file__), 'colours.json')
 
 
 def fiddle(n, max_dist=0.2, min_dist=0):
@@ -50,7 +52,7 @@ def to_hexcode(r, g, b) -> str:
 
 
 def init_name_cache():
-    with open('colours.json', 'r', encoding='utf-8') as f:
+    with open(COL_NAME_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
         COL_NAME_CACHE = {tuple(k.split(',')): v
                           for k, v in data.items()}

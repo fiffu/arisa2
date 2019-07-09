@@ -61,7 +61,7 @@ def make_random_color(h=0, s=0.5, v=0.8):
 def make_colour_embed(r, g, b, title=None, desc=None):
     hexa = helpers.to_hexcode(r, g, b)
     title = title or f'#{hexa} · rgb({r}, {g}, {b})'
-    
+
     colinfo = helpers.get_colour_name(r, g, b)
     if colinfo and not desc:
         names = ' / '.join('[{}]({})'.format(c['name'], c['url'])
@@ -169,12 +169,15 @@ class Colours(DatabaseCogMixin, commands.Cog):
         member = ctx.message.author
 
         last_reroll = await self.get_last('reroll', member.id)
-        cooled_down = has_elapsed(last_reroll, **REROLL_COOLDOWN_TIME)
+        cooled_down = False
+        if last_reroll:
+            cooled_down = has_elapsed(last_reroll, **REROLL_COOLDOWN_TIME)
+
         proceed = (not last_reroll) or cooled_down
 
         if not proceed:
             cooldown_finish_time = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
-            cooldown_to_go = cooldown_finish_time - datetime.utcnow() 
+            cooldown_to_go = cooldown_finish_time - datetime.utcnow()
             hours, remainder = divmod(cooldown_to_go.total_seconds(), 60 * 60)
             mins, secs = divmod(remainder, 60)
             h = f'{int(hours)}hr ' if int(hours) else ''

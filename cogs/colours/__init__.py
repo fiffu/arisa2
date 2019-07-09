@@ -78,11 +78,12 @@ async def assign_new_colour(member, mutate_or_reroll):
     role = get_role(member)
     colour = make_random_color()
 
-    fail_count = 0
+    attempts = 0
 
     # If no role, make new from random colour
-    while fail_count < 5:
+    while attempts < 5:
         try:
+            attempts += 1
             if not role:
                 role = await member.guild.create_role(
                     name=username,
@@ -110,7 +111,6 @@ async def assign_new_colour(member, mutate_or_reroll):
                 msg += (f' (rate limit while assigning colour ({cap}), '
                         f' retry: {retry_secs}s')
                 log.error(msg)
-                fail_count += 1
                 await asyncio.sleep(retry_secs)
 
             else:

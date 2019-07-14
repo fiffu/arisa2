@@ -25,6 +25,10 @@ log = logging.getLogger(__name__)
 CACHE = defaultdict(dict)
 
 
+VAMPY = '<:vampy:400648781743390720>'
+BIRB = '<:birb:508637853593501699>'
+
+
 def get_role(member):
     for role in member.roles:
         if role.name.lower() == str(member).lower():
@@ -286,7 +290,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
             if set_to:
                 embed = None
             else:
-                await ctx.send(f'No meidos allowed.')
+                emoji = choice([VAMPY, BIRB])
+                await ctx.send(emoji)
                 return
 
         log.info('Set %sfreeze on %s', un, str(member))

@@ -337,7 +337,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         # If never mutated before, 20% chance per msg to start mutation
         else:
-            if random < 0.2:
+            if random() < 0.2:
                 return
 
 

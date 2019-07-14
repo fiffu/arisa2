@@ -280,10 +280,18 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(f'Your colour has already been {un}frozen.')
             return
 
+        embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
+
+        if str(member) == 'Tannu#2037':
+            if set_to:
+                embed = None
+            else:
+                await ctx.send(f'No meidos allowed.')
+                return
+
         log.info('Set %sfreeze on %s', un, str(member))
         await self.update_frozen(member.id, set_to)
 
-        embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
 
         await ctx.send(f'Your colour has been {un}frozen.', embed=embed)
 

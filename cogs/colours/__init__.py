@@ -51,11 +51,11 @@ def check_valid_action(action):
         raise ValueError("value of 'action' must be one of: " + acts)
 
 
-def make_random_color(h=0, s=0.5, v=0.8):
+def make_random_color(h=0, s=0.7, v=0.5):
     """Used in reroll or new colour"""
     h = h or random()
-    s = s * uniform(0.9, 1.1)
-    v = v * uniform(0.9, 1.1)
+    s = s * uniform(0.8, 1.2)
+    v = v * uniform(0.7, 1.3)
     return discord.Colour.from_hsv(h, s, v)
 
 

@@ -283,10 +283,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
         log.info('Set %sfreeze on %s', un, str(member))
         await self.update_frozen(member.id, set_to)
 
-        if set_to is True:
-            embed = make_colour_embed(*role.colour.to_rgb())
+        embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
 
-        await ctx.send(f'Your colour has been {un}frozen your colour.')
+        await ctx.send(f'Your colour has been {un}frozen.', embed=embed)
 
 
     @commands.command()

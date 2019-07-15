@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from asyncio import sleep as asleep
 from collections import defaultdict
 from colorsys import rgb_to_hsv
@@ -32,6 +33,9 @@ BIRB = '<:birb:508637853593501699>'
 def get_role(member):
     for role in member.roles:
         if role.name.lower() == str(member).lower():
+            return role
+        # check if the user has a "name role" before giving up
+        if re.match("^(.+#\d+)$", role.name.lower()):
             return role
     return None
 
@@ -286,7 +290,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
 
-        if str(member) == 'Tannu#2037':
+        if role.name.lower() == 'tannu#2037':
             if set_to:
                 embed = None
             else:

@@ -35,7 +35,7 @@ def get_role(member):
         if role.name.lower() == str(member).lower():
             return role
         # check if the user has a "name role" before giving up
-        if re.match("^(.+#\d+)$", role.name.lower()):
+        if re.match(r"^(.+#\d+)$", role.name.lower()):
             return role
     return None
 

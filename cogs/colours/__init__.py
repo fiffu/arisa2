@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import asyncio
+from asyncio import sleep as asleep
 from collections import defaultdict
+from colorsys import rgb_to_hsv
 from datetime import datetime, timedelta, timezone
 import logging
 from math import ceil
-from random import random, uniform
-from types import SimpleNamespace
+from random import choice, random, uniform
 from typing import Optional
 
 import discord
@@ -23,6 +23,10 @@ log = logging.getLogger(__name__)
 
 
 CACHE = defaultdict(dict)
+
+
+VAMPY = '<:vampy:400648781743390720>'
+BIRB = '<:birb:508637853593501699>'
 
 
 def get_role(member):
@@ -51,11 +55,31 @@ def check_valid_action(action):
         raise ValueError("value of 'action' must be one of: " + acts)
 
 
-def make_random_color(h=0, s=0.5, v=0.8):
-    s = s * uniform(0.9,1.1)
-    v = v * uniform(0.9,1.1)
-    h, s, v = helpers.mutate_hsv(h or random(), s, v, repeats=0)
+def make_random_color(h=0, s=0.7, v=0.5):
+    """Used in reroll or new colour"""
+    h = h or random()
+    s = s * uniform(0.8, 1.2)
+    v = v * uniform(0.7, 1.3)
     return discord.Colour.from_hsv(h, s, v)
+
+
+def mutate(*rgb):
+    def change():
+        step = uniform(0.05, 0.10)  # amount to change by
+        sign = choice([1, -1])  # either increase or decrease
+        return sign * step
+
+    clamped = helpers.clamp(0, 1)  # make a clamp function witr range [0, 1]
+    new = [clamped(x + change()) for x in rgb]
+
+    # log.info('Mutate: rgb(%s %s %s) -> rgb(%s, %s, %s)', *old, *new)
+    return new
+
+
+def make_mutated_color(colobj: discord.Colour):
+    rgb = tuple([x / 255 for x in colobj.to_rgb()])
+    newrgb = [int(x * 255) for x in mutate(*rgb)]
+    return discord.Colour.from_rgb(*newrgb)
 
 
 def make_colour_embed(r, g, b, title=None, desc=None):
@@ -76,30 +100,44 @@ def make_colour_embed(r, g, b, title=None, desc=None):
 async def assign_new_colour(member, mutate_or_reroll):
     username = str(member)
     role = get_role(member)
-    colour = make_random_color()
+
+    newcol = make_random_color()
+    if mutate_or_reroll is 'mutate':
+        if not role:
+            return None
+        newcol = make_mutated_color(role.colour)
+
+    fmt = 'rgb({}, {}, {})'  # Used in formatting log/audit messages
+    new = fmt.format(*newcol.to_rgb())
 
     attempts = 0
 
-    # If no role, make new from random colour
     while attempts < 5:
         try:
             attempts += 1
-            if not role:
+
+            # If no role, make new from random colour
+            if mutate_or_reroll is 'reroll' and not role:
+                log.info('Creating colour role for %s with %s', username, new)
                 role = await member.guild.create_role(
                     name=username,
-                    colour=colour,
+                    colour=newcol,
                     reason='created new colour role as user had none')
                 await role.edit(position=get_max_colour_height(member.guild))
                 await member.add_roles(role, reason='assign colour role')
 
-            elif mutate_or_reroll is 'reroll':
-                oldcol = 'rgb({}, {}, {})'.format(*role.colour.to_rgb())
-                await role.edit(colour=colour,
-                                reason=f"Reroll new colour, was: {oldcol}")
-                break
+            # If have role, update Discord API
+            elif mutate_or_reroll in ['reroll', 'mutate']:
+                old = fmt.format(*role.colour.to_rgb())
+                msg = f"{mutate_or_reroll.title()} new colour {old} -> {new}"
+                log.info(msg + ' for %s', username)
+                await role.edit(colour=newcol, reason=msg)
 
-            elif mutate_or_reroll is 'mutate':
-                raise NotImplementedError
+            else:
+                log.error('Aborting unsupported action: %s', mutate_or_reroll)
+                raise NotImplementedError(f'{mutate_or_reroll}')
+
+            return newcol
 
         except HTTPException as e:
             msg = f'{e.__class__.__name__}: {str(e)}'
@@ -109,16 +147,16 @@ async def assign_new_colour(member, mutate_or_reroll):
                 retry = e.response.headers.get('Retry-After') or 0
                 retry_secs = ceil(retry / 1000)  
                 msg += (f' (rate limit while assigning colour ({cap}), '
-                        f' retry: {retry_secs}s')
+                        f' retrying in: {retry_secs}s')
                 log.error(msg)
-                await asyncio.sleep(retry_secs)
+                await asleep(retry_secs)
 
             else:
                 log.error(msg)
             
             await asyncio.sleep(1)
 
-    return colour
+    log.error('Failed to %s for %s after 5 tries', mutate_or_reroll, username)
 
 
 class Colours(DatabaseCogMixin, commands.Cog):
@@ -126,26 +164,27 @@ class Colours(DatabaseCogMixin, commands.Cog):
         self.bot = bot
 
 
-    async def get_last(self, mutate_or_reroll, userid):
-        check_valid_action(mutate_or_reroll)
+    async def update_cache(self, userid):
+        sql_select = """SELECT * FROM colours WHERE userid = %s"""
+        rows = await self.db_query(sql_select, [userid])
+        if not rows:
+            return None
 
-        if userid in CACHE:
-            return CACHE[userid].get(mutate_or_reroll)
+        for key in ['mutate', 'reroll', 'is_frozen']:
+            CACHE[userid][key] = None
 
-        sql_select = """SELECT * FROM colours
-                        WHERE userid = %s AND mutateorreroll = %s"""
-        rows = await self.db_query(sql_select, [userid, mutate_or_reroll])
-        if rows:
-            lasttime = rows[0]['tstamp']
-            CACHE[userid][mutate_or_reroll] = lasttime
-            return lasttime
+        for row in rows:
+            action = row['mutateorreroll']
+            CACHE[userid][action] = row['tstamp']
 
-        return None
+            if action == 'mutate':
+                # don't use `is` as the predicate for this block!
+                # `==` compares equality, `is` compares identity
+                CACHE[userid]['is_frozen'] = row['is_frozen']
 
 
     async def update_last(self, mutate_or_reroll, userid, newtime):
         check_valid_action(mutate_or_reroll)
-        CACHE[userid][mutate_or_reroll] = newtime
 
         # Upsert the new time
         sql_delete = f"""DELETE FROM colours
@@ -161,11 +200,39 @@ class Colours(DatabaseCogMixin, commands.Cog):
         await self.db_execute(
             sql_insert, [userid, mutate_or_reroll, newtime])
 
+        await self.update_cache(userid)
+
+
+    async def update_frozen(self, userid, set_to):
+        # Update row and local cache
+        sql_update = f"""UPDATE colours SET is_frozen = %s
+                         WHERE userid = %s AND mutateorreroll = %s"""
+        await self.db_query(sql_update, [set_to, userid, 'mutate'])
+        await self.update_cache(userid)
+
+
+    async def get_last(self, mutate_or_reroll, userid):
+        check_valid_action(mutate_or_reroll)
+
+        if userid in CACHE:
+            return CACHE[userid].get(mutate_or_reroll)
+
+        await self.update_cache(userid)
+        return CACHE[userid].get(mutate_or_reroll)
+
+
+    async def get_is_frozen(self, userid):
+        if userid in CACHE:
+            return CACHE[userid].get('is_frozen')
+
+        await self.update_cache(userid)
+        return CACHE[userid].get('is_frozen')
+
 
     @commands.command()
     async def col(self, ctx):
         if not ctx.guild:
-            await ctx.send(content='This command only works on a server!')
+            await ctx.send('This command only works on a server!')
             return
 
         member = ctx.message.author
@@ -178,8 +245,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
         proceed = (not last_reroll) or cooled_down
 
         if not proceed:
-            cooldown_finish_time = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
-            cooldown_to_go = cooldown_finish_time - datetime.utcnow()
+            cooldown_end = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
+            cooldown_to_go = cooldown_end - datetime.utcnow()
             hours, remainder = divmod(cooldown_to_go.total_seconds(), 60 * 60)
             mins, secs = divmod(remainder, 60)
             h = f'{int(hours)}hr ' if int(hours) else ''
@@ -189,9 +256,99 @@ class Colours(DatabaseCogMixin, commands.Cog):
             u = '' if random() < 0.5 else 'u'
             msg = f'You cannot reroll a new colo{u}r yet! ({hms})'
             await ctx.send(content=msg)
+            log.info('Blocked reroll from %s due to cooldown (%s remain)',
+                     str(member), hms)
             return
 
         newcol = await assign_new_colour(member, 'reroll')
         embed = make_colour_embed(*newcol.to_rgb())
-        await self.update_last('reroll', member.id, datetime.utcnow())
+        now = datetime.utcnow()
+        await self.update_last('mutate', member.id, now)
+        await self.update_last('reroll', member.id, now)
         await ctx.send(content=None, embed=embed)
+
+
+    async def set_freeze(self, ctx, set_to: bool):
+        if not ctx.guild:
+            await ctx.send('This command only works on a server!')
+            return
+
+        member = ctx.message.author
+        role = get_role(member)
+        un = 'un' if set_to is False else ''
+
+        if not role:
+            await ctx.send("You don't even have a colour role...")
+            return
+
+        already_frozen = await self.get_is_frozen(member.id)
+        if set_to == already_frozen:
+            await ctx.send(f'Your colour has already been {un}frozen.')
+            return
+
+        embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
+
+        if str(member) == 'Tannu#2037':
+            if set_to:
+                embed = None
+            else:
+                emoji = choice([VAMPY, BIRB])
+                await ctx.send(emoji)
+                return
+
+        log.info('Set %sfreeze on %s', un, str(member))
+        await self.update_frozen(member.id, set_to)
+
+
+        await ctx.send(f'Your colour has been {un}frozen.', embed=embed)
+
+
+    @commands.command()
+    async def freeze(self, ctx):
+        await self.set_freeze(ctx, set_to=True)
+
+
+    @commands.command()
+    async def unfreeze(self, ctx):
+        await self.set_freeze(ctx, set_to=False)
+
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        # Ignore messages from self, or from non-guild channels
+        if self.bot.user.id == message.author.id or not message.guild:
+            return
+
+        # Block mutation from command invocations
+        # Seems to lead to race conditions causing interference in
+        # executing some commands (such as !uncol)
+        if message.content.startswith(self.bot.command_prefix):
+            return
+
+        member = message.author
+
+        if not get_role(member):
+            return
+
+        last_mutate = await self.get_last('mutate', member.id)
+
+        # If mutated before, only proceed if cooldown has elapsed
+        if last_mutate:
+            if not has_elapsed(last_mutate, **MUTATE_COOLDOWN_TIME):
+                return
+
+        # If never mutated before, 20% chance per msg to start mutation
+        else:
+            if random() < 0.2:
+                return
+
+
+        frozen = await self.get_is_frozen(member.id)
+        if frozen:
+            return
+
+        newcol = await assign_new_colour(member, 'mutate')
+
+        await self.update_last('mutate', member.id, datetime.utcnow())
+        rgbstr = 'rgb({}, {}, {})'.format(*newcol.to_rgb())
+        log.info('Updated mutate time -> %s for %s', rgbstr, str(member))

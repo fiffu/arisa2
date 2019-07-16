@@ -104,10 +104,10 @@ async def assign_new_colour(member, mutate_or_reroll):
         except HTTPException as e:
             msg = f'{e.__class__.__name__}: {str(e)}'
 
-            if e.response.status is 429:
+            if e.response.status == 429:
                 cap = e.response.headers.get('X-RateLimit-Limit')
                 retry = e.response.headers.get('Retry-After') or 0
-                retry_secs = ceil(retry * 1000)
+                retry_secs = ceil(retry / 1000)  
                 msg += (f' (rate limit while assigning colour ({cap}), '
                         f' retry: {retry_secs}s')
                 log.error(msg)
@@ -115,6 +115,8 @@ async def assign_new_colour(member, mutate_or_reroll):
 
             else:
                 log.error(msg)
+            
+            await asyncio.sleep(1)
 
     return colour
 

@@ -243,7 +243,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         proceed = (not last_reroll) or cooled_down
 
         if not proceed:
-            last_reroll = last_reroll + timedelta(**REROLL_PENALTY)
+            last_reroll = last_reroll + timedelta(**REROLL_PENALTY_TIME)
             self.update_last('reroll',member.id, last_reroll)
             cooldown_end = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
             cooldown_to_go = cooldown_end - datetime.utcnow()

@@ -55,7 +55,7 @@ def check_valid_action(action):
         raise ValueError("value of 'action' must be one of: " + acts)
 
 
-def make_random_color(h=0, s=0.7, v=0.5):
+def make_random_color(h=0, s=0.7, v=0.7):
     """Used in reroll or new colour"""
     h = h or random()
     s = s * uniform(0.8, 1.2)

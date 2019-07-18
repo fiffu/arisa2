@@ -145,7 +145,7 @@ async def assign_new_colour(member, mutate_or_reroll):
             if e.response.status == 429:
                 cap = e.response.headers.get('X-RateLimit-Limit')
                 retry = e.response.headers.get('Retry-After') or 0
-                retry_secs = ceil(retry / 1000)  
+                retry_secs = ceil(int(retry) / 1000)  
                 msg += (f' (rate limit while assigning colour ({cap}), '
                         f' retrying in: {retry_secs}s')
                 log.error(msg)

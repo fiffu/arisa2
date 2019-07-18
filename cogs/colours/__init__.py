@@ -144,17 +144,21 @@ async def assign_new_colour(member, mutate_or_reroll):
 
             if e.response.status == 429:
                 cap = e.response.headers.get('X-RateLimit-Limit')
+                captype = 'per-route'
+                if not cap:
+                    cap = e.response.headers.get('X-RateLimit-Global')
+                    captype = 'global'
                 retry = e.response.headers.get('Retry-After') or 0
-                retry_secs = ceil(retry / 1000)  
-                msg += (f' (rate limit while assigning colour ({cap}), '
-                        f' retrying in: {retry_secs}s')
+                retry_secs = ceil(int(retry) / 1000)  
+                msg += (f' ({captype} rate limit of {cap} reached while '
+                        f'editing colour, retrying in: {retry_secs}s')
                 log.error(msg)
                 await asleep(retry_secs)
 
             else:
                 log.error(msg)
             
-            await asyncio.sleep(1)
+            await asleep(1)
 
     log.error('Failed to %s for %s after 5 tries', mutate_or_reroll, username)
 

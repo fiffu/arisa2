@@ -112,7 +112,7 @@ async def assign_new_colour(member, mutate_or_reroll):
 
     attempts = 0
 
-    while attempts < 5:
+    while attempts < 3:
         try:
             attempts += 1
 
@@ -140,27 +140,42 @@ async def assign_new_colour(member, mutate_or_reroll):
             return newcol
 
         except HTTPException as e:
-            msg = f'{e.__class__.__name__}: {str(e)}'
+            timeout = log_http_exception(e)
+            await asleep(timeout)
 
-            if e.response.status == 429:
-                cap = e.response.headers.get('X-RateLimit-Limit')
-                captype = 'per-route'
-                if not cap:
-                    cap = e.response.headers.get('X-RateLimit-Global')
-                    captype = 'global'
-                retry = e.response.headers.get('Retry-After') or 0
-                retry_secs = ceil(int(retry) / 1000)  
-                msg += (f' ({captype} rate limit of {cap} reached while '
-                        f'editing colour, retrying in: {retry_secs}s')
-                log.error(msg)
-                await asleep(retry_secs)
+    log.error('Failed to %s for %s after 3 tries', mutate_or_reroll, username)
 
-            else:
-                log.error(msg)
-            
-            await asleep(1)
 
-    log.error('Failed to %s for %s after 5 tries', mutate_or_reroll, username)
+def log_http_exception(exc):
+    msg = f'{e.__class__.__name__}'
+
+    resp = e.response
+    timeout = 1  # in seconds
+
+    if resp.status == 429:
+        cap = resp.headers.get('X-RateLimit-Limit')
+        captype = 'per-route'
+        if not cap:
+            cap = e.response.headers.get('X-RateLimit-Global')
+            captype = 'global'
+        if not cap:
+            captype = 'unknown'
+        
+        bucket = e.respose.headers.get('X-RateLimit-Bucket')
+
+        retry = e.response.headers.get('Retry-After') or 0
+        timeout = ceil(int(retry) / 1000)  
+        
+        msg += (f': exceeded {captype} rate limit (bucket: {bucket}) at cap '
+                f'of {cap} while editing colour, retrying in: {timeout}s')
+        log.error(msg)
+
+        tiemout = retry_secs
+
+    else:
+        log.error(msg)
+
+    return timeout
 
 
 class Colours(DatabaseCogMixin, commands.Cog):
@@ -352,6 +367,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
             return
 
         newcol = await assign_new_colour(member, 'mutate')
+
+        if not newcol:
+            return
 
         await self.update_last('mutate', member.id, datetime.utcnow())
         rgbstr = 'rgb({}, {}, {})'.format(*newcol.to_rgb())

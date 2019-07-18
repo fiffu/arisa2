@@ -65,7 +65,7 @@ def make_random_color(h=0, s=0.7, v=0.7):
 
 def mutate(*rgb):
     def change():
-        step = uniform(0.05, 0.10)  # amount to change by
+        step = uniform(0.10, 0.3)  # amount to change by
         sign = choice([1, -1])  # either increase or decrease
         return sign * step
 
@@ -264,6 +264,12 @@ class Colours(DatabaseCogMixin, commands.Cog):
         proceed = (not last_reroll) or cooled_down
 
         if not proceed:
+            # Bump remaining reroll cooldown, capping at 2x of max reroll time
+            last_reroll = min(2 * timedelta(**REROLL_COOLDOWN_TIME),
+                              last_reroll + timedelta(**REROLL_PENALTY_TIME))
+            await self.update_last('reroll', member.id, last_reroll)
+
+            # Parse remaining cooldown into human-friendly timestamp
             cooldown_end = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
             cooldown_to_go = cooldown_end - datetime.utcnow()
             hours, remainder = divmod(cooldown_to_go.total_seconds(), 60 * 60)

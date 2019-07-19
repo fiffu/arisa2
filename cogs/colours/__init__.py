@@ -160,12 +160,12 @@ def log_http_exception(exc):
             captype = 'global'
         if not cap:
             captype = 'unknown'
-        
+
         bucket = e.respose.headers.get('X-RateLimit-Bucket')
 
         retry = e.response.headers.get('Retry-After') or 0
-        timeout = ceil(int(retry) / 1000)  
-        
+        timeout = ceil(int(retry) / 1000)
+
         msg += (f': exceeded {captype} rate limit (bucket: {bucket}) at cap '
                 f'of {cap} while editing colour, retrying in: {timeout}s')
         log.error(msg)
@@ -265,8 +265,10 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         if not proceed:
             # Bump remaining reroll cooldown, capping at 2x of max reroll time
-            last_reroll = min(2 * timedelta(**REROLL_COOLDOWN_TIME),
-                              last_reroll + timedelta(**REROLL_PENALTY_TIME))
+            last_reroll = min(
+                last_reroll + 2 * timedelta(**REROLL_COOLDOWN_TIME),
+                last_reroll + timedelta(**REROLL_PENALTY_TIME)
+            )
             await self.update_last('reroll', member.id, last_reroll)
 
             # Parse remaining cooldown into human-friendly timestamp

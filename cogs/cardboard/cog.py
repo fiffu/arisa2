@@ -26,7 +26,7 @@ class DanbooruSearch(commands.Cog):
         cands, alias_applied = Parser(query).candidates
         return cands, alias_applied
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def tagparse(self, ctx, query: str):
         # Extract the argstr, catch cases where user forgets doublequotes
         _, *argstr = ctx.message.content.split(None, 1)
@@ -45,7 +45,7 @@ class DanbooruSearch(commands.Cog):
         await ctx.send(content=msg)
 
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def tagcheck(self, ctx, query: str):
         cand, alias_applied = Parser(
             query, spaces_to_underscore=True).first_candidate
@@ -85,6 +85,7 @@ class DanbooruSearch(commands.Cog):
 
     @commands.command()
     async def tagalias(self, ctx):
+        """Lists accepted short forms for various tags (requests accepted)"""
         msgs = []
 
         aliases = sorted(ALIASES.keys())
@@ -117,11 +118,14 @@ class DanbooruSearch(commands.Cog):
 
     @commands.command()
     async def cute(self, ctx, *args):
+        """Finds a cute picture with the given tag (spaces convert to _)
+        """
         query = ' '.join(args)
         await self.search(ctx, query, 's')
 
 
     @commands.command()
     async def lewd(self, ctx, *args):
+        """Finds a LEWD picture with the given tag"""
         query = ' '.join(args)
         await self.search(ctx, query, '-s')

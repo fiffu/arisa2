@@ -315,6 +315,7 @@ class KrSearch(commands.Cog):
 
     @commands.command()
     async def kr(self, ctx, name: str):
+        """Looks up a hero or artifact in King's Raid"""
         entity = kr.search(name)
         if not entity:
             ctx.send(NOT_FOUND)

@@ -208,16 +208,21 @@ class PublishSubscribe(DatabaseCogMixin, commands.Cog):
 
     @commands.command()
     async def track(self, ctx, *topics):
+        """Starts updates for a topic in this channel (to list topics: !track)
+        """
         await self.update_sub(ctx, True, *topics)
 
 
     @commands.command()
     async def untrack(self, ctx, *topics):
+        """Stops updates for a topic in this channel (stop all: !untrack all)
+        """
         await self.update_sub(ctx, False, *topics)
 
 
     @commands.command()
     async def tracking(self, ctx):
+        """Shows the topics that this channel receives updates for"""
         channel = ctx.message.channel
         subbed = await self.get_topics_by_channel(channel)
 

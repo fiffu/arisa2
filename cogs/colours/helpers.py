@@ -13,6 +13,7 @@ def to_hexcode(r, g, b) -> str:
 
 
 def init_name_cache():
+    global COL_NAME_CACHE
     with open(COL_NAME_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
         COL_NAME_CACHE = {tuple([int(x) for x in k.split(',')]): v

@@ -65,7 +65,7 @@ def make_random_color(h=0, s=0.7, v=0.7):
 
 def mutate(*rgb):
     def change():
-        step = uniform(0.10, 0.3)  # amount to change by
+        step = uniform(0.08, 0.15)  # amount to change by
         sign = choice([1, -1])  # either increase or decrease
         return sign * step
 

@@ -34,8 +34,11 @@ def get_role(member):
     for role in member.roles:
         if role.name.lower() == str(member).lower():
             return role
-        # check if the user has a "name role" before giving up
-        if re.match(r"^(.+#\d+)$", role.name.lower()):
+
+    # Use another loop for 2nd pass looking for a "name role"
+    # "Name roles" have names ending with 4-digit discriminators (#1234)
+    for role in member.roles:
+        if re.match(r"^(.+#\d{4})$", role.name.lower()):
             return role
     return None
 
@@ -321,6 +324,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
         embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
 
         if role.name.lower() == 'tannu#2037':
+            # Using rolename rather than username is more "tamper-resistant"
+            # since users can't change or remove their colour roles (for now)
             if set_to:
                 embed = None
             else:

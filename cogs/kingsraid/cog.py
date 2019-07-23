@@ -291,8 +291,7 @@ class KrSearch(commands.Cog):
             await message.add_reaction(emoji)
 
 
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
+    async def change_page(self, reaction, user):
         if self.is_me(user):
             return
 
@@ -311,6 +310,16 @@ class KrSearch(commands.Cog):
                 new = create_embed(entity, page)
 
         await reaction.message.edit(embed=new)
+
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        await self.change_page(reaction, user)
+
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        await self.change_page(reaction, user)
 
 
     @commands.command()

@@ -154,23 +154,23 @@ async def assign_new_colour(member, mutate_or_reroll):
 
 
 def log_http_exception(exc):
-    msg = f'{e.__class__.__name__}'
+    msg = f'{exc.__class__.__name__}'
 
-    resp = e.response
+    resp = exc.response
     timeout = 1  # in seconds
 
     if resp.status == 429:
         cap = resp.headers.get('X-RateLimit-Limit')
         captype = 'per-route'
         if not cap:
-            cap = e.response.headers.get('X-RateLimit-Global')
+            cap = exc.response.headers.get('X-RateLimit-Global')
             captype = 'global'
         if not cap:
             captype = 'unknown'
 
-        bucket = e.respose.headers.get('X-RateLimit-Bucket')
+        bucket = exc.respose.headers.get('X-RateLimit-Bucket')
 
-        retry = e.response.headers.get('Retry-After') or 0
+        retry = exc.response.headers.get('Retry-After') or 0
         timeout = ceil(int(retry) / 1000)
 
         msg += (f': exceeded {captype} rate limit (bucket: {bucket}) at cap '

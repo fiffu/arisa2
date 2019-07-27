@@ -163,14 +163,14 @@ def log_http_exception(exc):
         cap = resp.headers.get('X-RateLimit-Limit')
         captype = 'per-route'
         if not cap:
-            cap = exc.response.headers.get('X-RateLimit-Global')
+            cap = resp.headers.get('X-RateLimit-Global')
             captype = 'global'
         if not cap:
             captype = 'unknown'
 
-        bucket = exc.respose.headers.get('X-RateLimit-Bucket')
+        bucket = resp.headers.get('X-RateLimit-Bucket')
 
-        retry = exc.response.headers.get('Retry-After') or 0
+        retry = resp.headers.get('Retry-After') or 0
         timeout = ceil(int(retry) / 1000)
 
         msg += (f': exceeded {captype} rate limit (bucket: {bucket}) at cap '

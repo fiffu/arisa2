@@ -53,7 +53,6 @@ class DanbooruSearch(commands.Cog):
             await ctx.send(content='Unable to find any possible tags in your '
                                    f'query `{query}`')
 
-        await ctx.trigger_typing()
         sorted_tags, floated, sunk, vetoed = await fetch_tag_matches(cand)
 
         alias_msg = ''
@@ -99,7 +98,7 @@ class DanbooruSearch(commands.Cog):
 
 
     async def search(self, ctx, query, explicit_rating):
-        await ctx.trigger_typing()
+        # await ctx.trigger_typing()
         query = query.lower()
         posts, search_string = await smart_search(query, explicit_rating)
         selected: List[Tuple[dict, str]] = await select_posts(posts, 1)

@@ -323,11 +323,12 @@ class KrSearch(commands.Cog):
 
 
     @commands.command()
-    async def kr(self, ctx, name: str):
+    async def kr(self, ctx, *namestr: str):
         """Looks up a hero or artifact in King's Raid"""
+        name = ' '.join(namestr)
         entity = kr.search(name)
         if not entity:
-            ctx.send(NOT_FOUND)
+            await ctx.send(NOT_FOUND.format(name))
         else:
             embed = create_embed(entity)
             await ctx.send(content=None, embed=embed)

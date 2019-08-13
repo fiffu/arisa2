@@ -329,8 +329,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
             if set_to:
                 embed = None
             else:
-                emoji = choice([VAMPY, BIRB])
-                await ctx.send(emoji)
+                # emoji = choice([VAMPY, BIRB])
+                # await ctx.send(emoji)
                 return
 
         log.info('Set %sfreeze on %s', un, str(member))

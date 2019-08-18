@@ -16,6 +16,7 @@ DEFAULT_POOL_ARGS = {
 }
 
 POOL = None
+CLOSING = False
 
 
 class PoolClosedError(RuntimeError):
@@ -23,8 +24,7 @@ class PoolClosedError(RuntimeError):
 
 
 async def setup_pool(**kwargs):
-    global POOL  # module-level only; not "true" global scope
-
+    global POOL, CLOSING  # module-level only; not "true" global scope
 
     try:
         if POOL and POOL.closed:
@@ -36,6 +36,7 @@ async def setup_pool(**kwargs):
             kw = DEFAULT_POOL_ARGS.copy()
             kw.update(kwargs)
             POOL = await aiopg.create_pool(**kw)
+            CLOSING = False
             log.info('Database connection initialized.')
 
     except Exception as e:
@@ -69,13 +70,14 @@ def sync_setup_pool(loop=None):
 
 
 def close_pool():
-    global POOL
+    global POOL, CLOSING
 
-    if POOL.closed:
+    if CLOSING or POOL.closed:
         return
 
     # Signal connections to close
     POOL.close()
+    CLOSING = True
     log.info('Shutting down database connection pool.')
 
 

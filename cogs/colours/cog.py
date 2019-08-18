@@ -19,6 +19,11 @@ from cogs.mixins import DatabaseCogMixin
 from . import helpers
 from .config import *
 
+try:
+    from .banners import get_current_banner
+except ImportError:
+    get_current_banner = lambda: None
+
 
 log = logging.getLogger(__name__)
 
@@ -64,9 +69,13 @@ def check_valid_action(action):
 
 def make_random_color(h=0, s=0.7, v=0.7):
     """Used in reroll or new colour"""
-    h = h or random()
-    s = s * uniform(0.8, 1.2)
-    v = v * uniform(0.7, 1.3)
+    banner = get_current_banner()
+    if banner:
+        h, s, v = banner.roll()
+    else:
+        h = h or random()
+        s = s * uniform(0.8, 1.2)
+        v = v * uniform(0.7, 1.3)
     return discord.Colour.from_hsv(h, s, v)
 
 

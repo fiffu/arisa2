@@ -1,73 +1,133 @@
+from collections import OrderedDict
 import random
 
 
 class Puddle:
-    def __init__(self, *coltuples):
+    DISTRIBUTIONS = {
+        'uniform': random.uniform,
+        'gaussian': random.gauss,
+    }
+
+    def __init__(self):
+        self._components = OrderedDict()
+        self.colspace = None
+
+
+    @classmethod
+    def wrap(cls, value):
+        return value % 1
+
+
+    @classmethod
+    def clamp(cls, value):
+        return min(max(value, 0), 1)
+
+
+    @classmethod
+    def roll(cls, distribution, p1, p2):
+        func = self.DISTRIBUTIONS.get(distribution)
+        if not func:
+            return 0
+        return func(p1, p2)
+
+
+    def __getattr__(self, component_name):
+        if component_name in self._components:
+            return self._components[component_name]
+
+
+    def add_component(self,
+                      component_name: str,
+                      normalize_mode: str,
+                      distribution: str,
+                      param1: float,
+                      param2: float):
         try:
-            selection = []
-            for tup in coltuples:
-                a, b, c = tup
-                selection.append((a, b, c))
-        except (ValueError, TypeError) as e:
-            msg = f'varargs must be Tuple[float, float, float] ({e})'
-            raise ValueError(msg)
+            name = str(component_name)
+            assert component_name not in self._components
+        except ValueError:
+            raise ValueError('component name must be a string')
+        except AssertionError:
+            raise ValueError(f'"{component_name}" has already been added '
+                             f'as a component')
 
-        self.selection = selection
+        args = locals()
 
+        for argname, accepts in [
+            'normalize_mode', ('wrap', 'clamp'),
+            'distribution', DISTRIBUTIONS.keys(),
+        ]:
+            if args[argname] not in accepts:
+                raise ValueError(f'"{}" must be one of: {", ".join(accepts)}')
 
-    def dip(self):
-        if not self.selection:
-            r = lambda: random.uniform(0, 1)
-            return r(), r(), r()
-        return random.choice(self.selection)
+        for px in ['param1', 'param2']:
+            p = args[px]
+            if not (0 <= p and p <= 1):
+                raise ValueError(f'value of "{px}" must be in range [0, 1]')
 
-
-
-class NormalPuddle:
-    def __init__(self, hue_mean=0.5, sd=0.05):
-        if not (0 <= hue_mean and hue_mean <= 1):
-            msg = 'argument hue_mean must be in range 0 <= hue_mean <= 1'
-            raise ValueError(msg)
-
-        self.hue_mean = hue_mean
-        self.sd = sd
-
-
-    def dip(self):
-        # Generate random number
-        val = random.gauss(self.hue_mean, self.sd)
-        # Normalize to [0, 1]
-        return val % 1
+        self._components[component_name] = {'normalize_mode': normalize_mode,
+                                            'distribution': distribution,
+                                            'param1': param1,
+                                            'param2': param2}
 
 
+        def dip(self):
+            out = []
+            for component, options in self._components.items():
+                rolled = self.roll_component(component, **options)
+                out.append(rolled)
+            return tuple(out)
 
-class UniformPuddle:
+
+        def roll_component(self, component_name, **options):
+            if not component_name in self._components:
+                raise ValueError(f'no such component: "{component_name}"')
+
+            dist = options['distribution']
+            p1 = options['param1']
+            p2 = options['param2']
+
+            value = self.roll(dist, p1, p2)
+
+            norm_method = getattr(self, options['normalize_mode'])
+            value =  norm_method(value)
+
+            return value
+
+
+
+class HsvPuddle(Puddle):
     def __init__(self,
-                 a_low=0, a_high=1,
-                 b_low=0, b_high=1,
-                 c_low=0, c_high=1):
-        loc = locals()
-
-        for name in ['a_low', 'a_high',
-                     'b_low', 'b_high',
-                     'c_low', 'c_high']:
-
-            var = loc[name]
-            if not (0 <= var and var <= 1):
-                msg = f'argument {name} must be in range 0 <= {name} <= 1'
-                raise ValueError(msg)
-
-            setattr(self, name, var)
+                 h_dist, h_param1, h_param2,
+                 s_dist, s_param1, s_param2,
+                 v_dist, v_param1, v_param2):
+        super().__init__(self)
+        self.colspace = 'hsv'
+        self.add_component('h', 'wrap', h_dist, h_param1, h_param2)
+        self.add_component('s', 'clamp', s_dist, s_param1, s_param2)
+        self.add_component('v', 'clamp', v_dist, v_param1, v_param2)
 
 
-    def dip(self):
-        unif = random.uniform
-        out = []
-        for x in 'abc':
-            roll = unif(getattr(self, x + '_low'),
-                        getattr(self, x + '_high'))
-            out.append(roll)
-        return tuple(out)
+
+class RgbPuddle(Puddle):
+    def __init__(self,
+                 r_dist, r_param1, r_param2,
+                 g_dist, g_param1, g_param2,
+                 b_dist, b_param1, b_param2):
+        super().__init__(self)
+        self.colspace = 'rgb'
+        self.add_component('r', 'clamp', r_dist, r_param1, r_param2)
+        self.add_component('g', 'clamp', g_dist, g_param1, g_param2)
+        self.add_component('b', 'clamp', b_dist, b_param1, b_param2)
+
+
+
+class StaticPuddle:
+    def __init__(self, cls_pool, component1, component2, component3):
+        cls_pool.__init__(self,
+                          'uniform', component1, component1,
+                          'uniform', component2, component2,
+                          'uniform', component3, component3)
 
 
 

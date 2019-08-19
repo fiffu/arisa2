@@ -16,8 +16,8 @@ class HalloweenBanner(Pool):
                        'uniform', 0.8, 0.9)
 
     purple_weight = 55
-    brown = HsvPuddle('gaussian', 324/360, 0.05,
-                      'uniform', 0.5, 0.7,
+    purple = HsvPuddle('gaussian', 324/360, 0.05,
+                      'uniform', 0.5, 0.6,
                       'uniform', 0.4, 0.5)
 
     black_weight = 5  # SSR
@@ -26,7 +26,7 @@ class HalloweenBanner(Pool):
     def __init__(self):
         super().__init__()
 
-        for colour in ['orange', 'brown', 'black']:
+        for colour in ['orange', 'purple', 'black']:
             pud = getattr(self, colour)
             weight = getattr(self, colour + '_weight')
 

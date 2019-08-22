@@ -160,6 +160,7 @@ async def assign_new_colour(member, mutate_or_reroll):
             await asleep(timeout)
 
     log.error('Failed to %s for %s after 3 tries', mutate_or_reroll, username)
+    return None
 
 
 def log_http_exception(exc):
@@ -316,6 +317,11 @@ class Colours(DatabaseCogMixin, commands.Cog):
             return
 
         newcol = await assign_new_colour(member, 'reroll')
+        if not newcol:
+            msg = ("I couldn't assign you a new colour. This could be due to "
+                   "Discord's rate limits, so try again later.")
+            await ctx.send(content=msg)
+
         embed = make_colour_embed(*newcol.to_rgb())
         now = datetime.utcnow()
         await self.update_last('mutate', member.id, now)

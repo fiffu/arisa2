@@ -379,8 +379,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
         await self.set_freeze(ctx, set_to=False)
 
 
-    @commands.command()
+    @commands.command(aliases=['ci'])
     async def colinfo(self, ctx):
+        """Tells you about your colour"""
         if not ctx.guild:
             await ctx.send('This command only works on a server!')
             return
@@ -400,13 +401,23 @@ class Colours(DatabaseCogMixin, commands.Cog):
         cd_to_go = cooldown_remaining(last_reroll, **REROLL_COOLDOWN_TIME)
         cd_to_go = cd_to_go or '_(No cooldown, reroll available)_'
 
+        addlines = []
         desc = embed.description or ''
-        spacing = "\n\n" if desc else ""
-        desc = ''.join([desc, spacing, '**Reroll cooldown: **', cd_to_go])
+
+        addlines.extend([desc,
+                         '\n\n' if desc else '',
+                         '**Reroll cooldown: **', cd_to_go])
+
+        if ctx.message.content.startswith(ctx.prefix + 'colinfo'):
+            protip = 'Protip: you can use !ci as a shortcut for this command.'
+            # addlines.extend(
+            #     ['\n', f'`{protip}`'])
+            embed.set_footer(text=protip)
+
+        desc = ''.join(addlines)
         embed.description = desc
 
         await ctx.send(embed=embed)
-
 
 
     @commands.Cog.listener()

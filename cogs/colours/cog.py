@@ -443,6 +443,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
         if last_mutate:
             if not has_elapsed(last_mutate, **MUTATE_COOLDOWN_TIME):
                 return
+            # 10% chance to mutate if off cooldown
+            elif random() < 0.9:
+                return
 
         # If never mutated before, 20% chance per msg to start mutation
         else:

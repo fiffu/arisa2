@@ -397,25 +397,50 @@ class Colours(DatabaseCogMixin, commands.Cog):
         colour = role.colour
         embed = make_colour_embed(*colour.to_rgb())
 
+        desc = embed.description or ''
+        desclines = [desc]
+
         last_reroll = await self.get_last('reroll', member.id)
         cd_to_go = cooldown_remaining(last_reroll, **REROLL_COOLDOWN_TIME)
         cd_to_go = cd_to_go or '_(No cooldown, reroll available)_'
 
-        addlines = []
-        desc = embed.description or ''
+        desclines.extend(['\n\n' if desc else '',
+                          '**Reroll cooldown: **',
+                          cd_to_go])
 
-        addlines.extend([desc,
-                         '\n\n' if desc else '',
-                         '**Reroll cooldown: **', cd_to_go])
+        last_mutate = await self.get_last('mutate', member.id)
+        h, m, day, mth, yr = last_mutate.strftime('%H %M %d %b %Y').split()
+
+        now = datetime.utcnow()
+        now_day, now_mth, now_yr = now.strftime('%d %b %Y').split()
+        year = '' if yr == now_yr else ' ' + yr  # Hide year if it's this year
+
+        date, daysago = '', ''
+        if (day == now_day) and (mth == now_mth) and (yr == now_yr):
+            date = 'Today'
+        else:
+            days_diff = (now - last_mutate).days
+            if days_diff == 1:
+                date = 'Yesterday'
+            else:
+                date = f'{int(day)} {mth}{year}'
+                daysago = f', {days_diff} days ago'
+
+        desclines.extend(['\n',
+                          '**Last mutate: **',
+                          f'{date} at {h}:{m} UTC{daysago}'])
+
+        frozen = await self.get_is_frozen(member.id)
+        desclines.extend([' _(currently frozen)_' if frozen else ''])
+
 
         if ctx.message.content.startswith(ctx.prefix + 'colinfo'):
             protip = 'Protip: you can use !ci as a shortcut for this command.'
-            # addlines.extend(
+            # desclines.extend(
             #     ['\n', f'`{protip}`'])
             embed.set_footer(text=protip)
 
-        desc = ''.join(addlines)
-        embed.description = desc
+        embed.description = ''.join(desclines)
 
         await ctx.send(embed=embed)
 

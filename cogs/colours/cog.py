@@ -419,11 +419,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
         if (day == now_day) and (mth == now_mth) and (yr == now_yr):
             date = 'Today'
         else:
+            date = f'{int(day)} {mth}{year}'
             days_diff = (now - last_mutate).days
-            if days_diff == 1:
-                date = 'Yesterday'
-            else:
-                date = f'{int(day)} {mth}{year}'
+            if days_diff > 1:
                 daysago = f', {days_diff} days ago'
 
         desclines.extend(['\n',

@@ -2,6 +2,7 @@ import logging
 import random
 import re
 
+from discord import Embed
 from discord.ext import commands
 
 
@@ -10,6 +11,8 @@ log = logging.getLogger(__name__)
 DEFAULT_ROLL_DICE_COUNT = 1
 DEFAULT_ROLL_SIDES = 100
 DEFAULT_ROLL_MODIFIER = -1
+
+GITHUB_LINK = 'https://github.com/fiffu/arisa2'
 
 
 class General(commands.Cog):
@@ -25,6 +28,19 @@ class General(commands.Cog):
     async def on_ready(self):
         log.info(f'Logged in as {self.bot.user.name}.')
         log.info(f'  https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=0\n')
+
+
+    @commands.command()
+    async def git(self, ctx, *args):
+        """Spot a bug? Want to contribute? >> github.com/fiffu/arisa2"""
+        emb = Embed(title='GitHub · fiffu/arisa2',
+                    description=(f'Bugs and suggestions: create an issue!\n'
+                                 f'{GITHUB_LINK}/issues\n\n'
+                                 f'Contribtions: pull requests welcome!'
+                                 f'```git clone {GITHUB_LINK}.git```'),
+                    #url=GITHUB_LINK,
+                    colour=0x1e2327)
+        await ctx.send(embed=emb)
 
 
     @commands.command()

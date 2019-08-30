@@ -15,7 +15,7 @@ def make_post_title(post):
     artist = ''
     if artist_str:
       artists = post['tag_string_artist'].replace(' ', ', ')
-      artist = f" drawn by `{artists}`"
+      artist = f" drawn by {artists}"
 
     curr_len = len(artist) + len('``')
 
@@ -40,7 +40,6 @@ def make_post_title(post):
                 unadded -= 1
 
     char_string = ', '.join(include_chars)
-    char_string = f'`{char_string}`' if char_string else ''
     title = f'{char_string}{artist}'
     title = title or '(untitled)'
     assert(len(title) <= 256)

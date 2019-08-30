@@ -54,7 +54,8 @@ def create_embed(obj, page=0):
     def zero_five_stars(li):
         s = f'**`0*:`** {li[0]}\n**`3*:`** {li[3]}\n**`5*:`** {li[5]}'
         # Monkey patch for excess length
-        if len(s) > 1024:
+        limit = 512 if obj.entity == 'Hero' else 1024
+        if len(s) > limit:
             s = f'**`0*:`** {li[0]}\n**`3*:`** {li[3]}'
         return s
 

@@ -8,9 +8,7 @@ CREATE TABLE "emojistats" (
 
 DROP TABLE IF EXISTS emojistats_archive;
 CREATE TABLE "emojistats_archive" (
-    tstamp      TIMESTAMP   NOT NULL,
-    emoji_count JSON        NOT NULL,
-    total_count INT         NOT NULL,
-    PRIMARY KEY tstamp
+    tstamp      TIMESTAMP   PRIMARY KEY,
+    emoji_json  JSON        NOT NULL,
+    total_count INT         NOT NULL
 );
-

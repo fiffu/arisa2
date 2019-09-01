@@ -2,6 +2,7 @@ import logging
 
 #from .debugcog import DebugCog
 from .generalcog import General
+from .emojistats.cog import EmojiStatsCog
 
 from .colours.cog import Colours
 from .kingsraid.cog import KrSearch
@@ -18,6 +19,7 @@ ENABLED_COGS = [
     #DebugCog,
     General,
     Colours,
+    EmojiStatsCog,
     KrSearch,
     DanbooruSearch,
     PublishSubscribe,

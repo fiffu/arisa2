@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, OrderedDict
 from datetime import datetime
 import logging
 import re
@@ -38,10 +38,13 @@ def embed_from_emoji_tups(emoji_tup_list):
         embed.add_field(name=wrapped, value=url, inline=True)
 
     if not emoji_tup_list:
-        embed.description = "_(Couldn't detect any emoji)_"
+        embed.description = "_(Couldn't detect any custom emoji)_"
+    else:
+        uid = emoji_tup_list[0][1]
+        url = f'https://cdn.discordapp.com/emojis/{uid}.png'
+        embed.set_image(url)
 
     return embed
-
 
 
 def cleave_emoji(emoji_str):
@@ -122,7 +125,9 @@ class EmojiStatsCog(DatabaseCogMixin, commands.Cog):
                                tstamp: datetime,
                                remove: bool):
         if DEBUGGING:
-            log.info('Skip incrementing for %s', emojistr)
+            log.info('Skip %scrementing for %s',
+                     'de' if remove else 'in',
+                     emojistr)
             return
 
         query = """
@@ -187,10 +192,13 @@ class EmojiStatsCog(DatabaseCogMixin, commands.Cog):
         # Push archive row
         await self.db_execute(query,
                               [tstamp, Json(emoji_ctr), total_count])
+        log.info('Trimmed emojistats into archive, tstamp=%s',
+                 tstamp.timestamp())
 
 
     @commands.command()
     async def picfor(self, ctx, *args):
+        """Provides the link to the picture of a given (custom) emoji"""
         args = ' '.join(args)
         emoji_tuples = [(name, uid) for _, name, uid in find_emoji(args)]
         embed = embed_from_emoji_tups(emoji_tuples)
@@ -199,29 +207,32 @@ class EmojiStatsCog(DatabaseCogMixin, commands.Cog):
 
     @commands.command()
     async def steal(self, ctx):
+        """Steals emoji from recent messages in the channel you use this in"""
         messages = await ctx.history(limit=10).flatten()
-        emoji_found_tups = set()
 
         local_emojis = []
         if ctx.guild:
             local_emojis = list(filter(lambda e: cleave_emoji(str(e))[1],
                                        ctx.guild.emojis))
 
+        # Use ordered dict so most recently-encountered emoji will appear
+        # at the top of the embed result
+        emoji_found_tups = OrderedDict()
         for message in messages:
-            for _, name, uid in find_emoji(message.content):
-                if uid not in local_emojis:
-                    emoji_found_tups.add((name, uid))
+            # Stop if we've reached the embed fields threshold of 10 fields
+            if len(emoji_found_tups) >= 10:
+                break
 
-            for react in message.reactions:
-                if isinstance(react.emoji, str):
-                    # This is a utf-8, non-custom emoji
-                    continue
-                for _, name, uid in find_emoji(str(react.emoji)):
-                    if uid not in local_emojis:
-                        emoji_found_tups.add((name, uid))
+            # Combine message and reacts into single string for easy searching
+            text = message.content + (
+                ' '.join(str(r) for r in message.reactions))
 
-        if len(emoji_found_tups) >= 10:
-            emoji_found_tups = emoji_found_tups[:10]
+            for _, name, uid in find_emoji(text):
+                key = (name, uid)
+                if (uid not in local_emojis) and (key not in emoji_found_tups):
+                    emoji_found_tups[key] = None
+
+        emoji_found_tups = list(emoji_found_tups.keys())[:10]
 
         embed = embed_from_emoji_tups(emoji_found_tups)
         await ctx.send(embed=embed)

@@ -1,6 +1,8 @@
 import logging
 
-#from .debugcog import DebugCog
+from appconfig import DEBUGGING
+
+from .debugcog import DebugCog
 from .generalcog import General
 from .emojistats.cog import EmojiStatsCog
 
@@ -16,7 +18,7 @@ from .plugtracker.browndustcog import PlugBrownDust
 log = logging.getLogger(__name__)
 
 ENABLED_COGS = [
-    #DebugCog,
+    DebugCog,
     General,
     Colours,
     EmojiStatsCog,

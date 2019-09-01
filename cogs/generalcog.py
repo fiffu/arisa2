@@ -26,6 +26,7 @@ class General(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        log.info('--------------------------------------------------------')
         log.info(f'Logged in as {self.bot.user.name}.')
         log.info(f'  https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=0\n')
 

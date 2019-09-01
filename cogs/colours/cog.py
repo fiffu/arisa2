@@ -19,6 +19,11 @@ from cogs.mixins import DatabaseCogMixin
 from . import helpers
 from .config import *
 
+try:
+    from .banners import get_current_banner
+except ImportError:
+    get_current_banner = lambda: None
+
 
 log = logging.getLogger(__name__)
 
@@ -64,9 +69,13 @@ def check_valid_action(action):
 
 def make_random_color(h=0, s=0.7, v=0.7):
     """Used in reroll or new colour"""
-    h = h or random()
-    s = s * uniform(0.8, 1.2)
-    v = v * uniform(0.7, 1.3)
+    banner = get_current_banner()
+    if banner:
+        h, s, v = banner.roll()
+    else:
+        h = h or random()
+        s = s * uniform(0.8, 1.2)
+        v = v * uniform(0.7, 1.3)
     return discord.Colour.from_hsv(h, s, v)
 
 
@@ -147,31 +156,32 @@ async def assign_new_colour(member, mutate_or_reroll):
             return newcol
 
         except HTTPException as e:
-            timeout = log_http_exception(e)
+            timeout = min(5, log_http_exception(e))
             await asleep(timeout)
 
     log.error('Failed to %s for %s after 3 tries', mutate_or_reroll, username)
+    return None
 
 
 def log_http_exception(exc):
-    msg = f'{e.__class__.__name__}'
+    msg = f'{exc.__class__.__name__}'
 
-    resp = e.response
+    resp = exc.response
     timeout = 1  # in seconds
 
     if resp.status == 429:
         cap = resp.headers.get('X-RateLimit-Limit')
         captype = 'per-route'
         if not cap:
-            cap = e.response.headers.get('X-RateLimit-Global')
+            cap = resp.headers.get('X-RateLimit-Global')
             captype = 'global'
         if not cap:
             captype = 'unknown'
 
-        bucket = e.respose.headers.get('X-RateLimit-Bucket')
+        bucket = resp.headers.get('X-RateLimit-Bucket')
 
-        retry = e.response.headers.get('Retry-After') or 0
-        timeout = ceil(int(retry) / 1000)
+        retry_secs = resp.headers.get('Retry-After') or 0
+        timeout = ceil(int(retry_secs) / 1000)
 
         msg += (f': exceeded {captype} rate limit (bucket: {bucket}) at cap '
                 f'of {cap} while editing colour, retrying in: {timeout}s')
@@ -183,6 +193,23 @@ def log_http_exception(exc):
         log.error(msg)
 
     return timeout
+
+
+def cooldown_remaining(last_use_tstamp, **cooldown_timedelta_kwargs):
+    cooldown_end = last_use_tstamp + timedelta(**REROLL_COOLDOWN_TIME)
+    cooldown_to_go = cooldown_end - datetime.utcnow()
+    total_secs = cooldown_to_go.total_seconds()
+
+    if max(total_secs, 0) == 0:
+        return None
+
+    hours, remainder = divmod(total_secs, 60 * 60)
+    mins, secs = divmod(remainder, 60)
+    h = f'{int(hours)}hr ' if int(hours) else ''
+    m = f'{int(mins)}min ' if int(mins) else ''
+    s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec '
+    hms = f'{h}{m}{s}'.strip()
+    return hms
 
 
 class Colours(DatabaseCogMixin, commands.Cog):
@@ -280,22 +307,22 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await self.update_last('reroll', member.id, last_reroll)
 
             # Parse remaining cooldown into human-friendly timestamp
-            cooldown_end = last_reroll + timedelta(**REROLL_COOLDOWN_TIME)
-            cooldown_to_go = cooldown_end - datetime.utcnow()
-            hours, remainder = divmod(cooldown_to_go.total_seconds(), 60 * 60)
-            mins, secs = divmod(remainder, 60)
-            h = f'{int(hours)}hr ' if int(hours) else ''
-            m = f'{int(mins)}min ' if int(mins) else ''
-            s = '' if any([h, m]) else f'cooldown: {secs:.2f} sec '
-            hms = f'{h}{m}{s}'.strip()
+            hms = cooldown_remaining(last_reroll, **REROLL_COOLDOWN_TIME)
             u = '' if random() < 0.5 else 'u'
             msg = f'You cannot reroll a new colo{u}r yet! ({hms})'
             await ctx.send(content=msg)
             log.info('Blocked reroll from %s due to cooldown (%s remain)',
-                     str(member), hms)
+                     str(member),
+                     hms)
             return
 
         newcol = await assign_new_colour(member, 'reroll')
+        if not newcol:
+            msg = ("I couldn't assign you a new colour. This could be due to "
+                   "Discord's rate limits, so try again later.")
+            await ctx.send(content=msg)
+            return
+
         embed = make_colour_embed(*newcol.to_rgb())
         now = datetime.utcnow()
         await self.update_last('mutate', member.id, now)
@@ -329,8 +356,8 @@ class Colours(DatabaseCogMixin, commands.Cog):
             if set_to:
                 embed = None
             else:
-                emoji = choice([VAMPY, BIRB])
-                await ctx.send(emoji)
+                # emoji = choice([VAMPY, BIRB])
+                # await ctx.send(emoji)
                 return
 
         log.info('Set %sfreeze on %s', un, str(member))
@@ -350,6 +377,70 @@ class Colours(DatabaseCogMixin, commands.Cog):
     async def unfreeze(self, ctx):
         """Makes your colour start mutating"""
         await self.set_freeze(ctx, set_to=False)
+
+
+    @commands.command(aliases=['ci'])
+    async def colinfo(self, ctx):
+        """Tells you about your colour"""
+        if not ctx.guild:
+            await ctx.send('This command only works on a server!')
+            return
+
+        member = ctx.message.author
+        role = get_role(member)
+
+        if not role:
+            await ctx.send("You don't have a colour role. Type !col to get "
+                           "a random colour!")
+            return
+
+        colour = role.colour
+        embed = make_colour_embed(*colour.to_rgb())
+
+        desc = embed.description or ''
+        desclines = [desc]
+
+        last_reroll = await self.get_last('reroll', member.id)
+        cd_to_go = cooldown_remaining(last_reroll, **REROLL_COOLDOWN_TIME)
+        cd_to_go = cd_to_go or '_(No cooldown, reroll available)_'
+
+        desclines.extend(['\n\n' if desc else '',
+                          '**Reroll cooldown: **',
+                          cd_to_go])
+
+        last_mutate = await self.get_last('mutate', member.id)
+        h, m, day, mth, yr = last_mutate.strftime('%H %M %d %b %Y').split()
+
+        now = datetime.utcnow()
+        now_day, now_mth, now_yr = now.strftime('%d %b %Y').split()
+        year = '' if yr == now_yr else ' ' + yr  # Hide year if it's this year
+
+        date, daysago = '', ''
+        if (day == now_day) and (mth == now_mth) and (yr == now_yr):
+            date = 'Today'
+        else:
+            date = f'{int(day)} {mth}{year}'
+            days_diff = (now - last_mutate).days
+            if days_diff > 1:
+                daysago = f', {days_diff} days ago'
+
+        desclines.extend(['\n',
+                          '**Last mutate: **',
+                          f'{date} at {h}:{m} UTC{daysago}'])
+
+        frozen = await self.get_is_frozen(member.id)
+        desclines.extend([' _(currently frozen)_' if frozen else ''])
+
+
+        if ctx.message.content.startswith(ctx.prefix + 'colinfo'):
+            protip = 'Protip: you can use !ci as a shortcut for this command.'
+            # desclines.extend(
+            #     ['\n', f'`{protip}`'])
+            embed.set_footer(text=protip)
+
+        embed.description = ''.join(desclines)
+
+        await ctx.send(embed=embed)
 
 
     @commands.Cog.listener()
@@ -374,6 +465,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
         # If mutated before, only proceed if cooldown has elapsed
         if last_mutate:
             if not has_elapsed(last_mutate, **MUTATE_COOLDOWN_TIME):
+                return
+            # 10% chance to mutate if off cooldown
+            elif random() < 0.9:
                 return
 
         # If never mutated before, 20% chance per msg to start mutation

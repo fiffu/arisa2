@@ -1,10 +1,13 @@
 from collections import Counter
 from datetime import datetime
 import logging
+import re
 
+from discord import Embed
 from discord.ext import commands
 from psycopg2.extras import Json
 
+from appconfig import DEBUGGING
 from cogs.mixins import DatabaseCogMixin
 
 
@@ -14,9 +17,42 @@ log = logging.getLogger(__name__)
 ROW_COUNT_HARD_CAP = 5000
 ROW_COUNT_SOFT_CAP = 1000
 
+EMOJI_STRING_PATTERN = r'\<\:(?P<name>.+)\:(?P<uid>\d+)\>'
 
 
-class EmojiStats(DatabaseCogMixin, commands.Cog):
+def find_emoji(str_content):
+    for name, uid in set(re.findall(EMOJI_STRING_PATTERN, str_content)):
+        raw = f'<:{name}:{uid}>'
+        yield raw, name, uid
+
+
+def embed_from_emoji_tups(emoji_tup_list):
+    if len(emoji_tup_list) > 10:
+        emoji_tup_list = emoji_tup_list[:10]
+
+    embed = Embed()
+
+    for name, uid in emoji_tup_list:
+        wrapped = f':{name}:'
+        url = f'https://cdn.discordapp.com/emojis/{uid}.png'
+        embed.add_field(name=wrapped, value=url, inline=True)
+
+    if not emoji_tup_list:
+        embed.description = "_(Couldn't detect any emoji)_"
+
+    return embed
+
+
+
+def cleave_emoji(emoji_str):
+    matched = re.match(EMOJI_STRING_PATTERN)
+    if not matched:
+        return (None, None)
+    name, uid = matched.groups()
+    return name, uid
+
+
+class EmojiStatsCog(DatabaseCogMixin, commands.Cog):
     """
     Stats for emoji nerds
     """
@@ -50,10 +86,34 @@ class EmojiStats(DatabaseCogMixin, commands.Cog):
     async def on_reaction_change(self, reaction, user, removing):
         if self.is_me(user):
             return
-        emoji_str = str(reaction.emoji)
+
+        emoji = reaction.emoji
+
+        if not emoji.available:
+            return
+
+        emoji_str = str(emoji)
         userid = user.id
         tstamp = reaction.message.created_at  # in UTC
         await self.bump_emoji_usage(emoji_str, userid, tstamp, removing)
+
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if self.is_me(message.author):
+            return
+
+        if message.content.startswith(self.bot.command_prefix):
+            return
+
+        userid = message.author.id
+        tstamp = message.created_at
+
+        for raw, _, _ in find_emoji(message.content):
+            await self.bump_emoji_usage(raw,
+                                        userid,
+                                        tstamp,
+                                        remove=False)
 
 
     async def bump_emoji_usage(self,
@@ -61,6 +121,10 @@ class EmojiStats(DatabaseCogMixin, commands.Cog):
                                userid: int,
                                tstamp: datetime,
                                remove: bool):
+        if DEBUGGING:
+            log.info('Skip incrementing for %s', emojistr)
+            return
+
         query = """
             INSERT INTO emojistats(emojistr, userid, tstamp)
                 VALUES (%s, %s, %s)
@@ -123,3 +187,49 @@ class EmojiStats(DatabaseCogMixin, commands.Cog):
         # Push archive row
         await self.db_execute(query,
                               [tstamp, Json(emoji_ctr), total_count])
+
+
+    @commands.command()
+    async def picfor(self, ctx, *args):
+        args = ' '.join(args)
+        emoji_tuples = [(name, uid) for _, name, uid in find_emoji(args)]
+        embed = embed_from_emoji_tups(emoji_tuples)
+        await ctx.send(embed=embed)
+
+
+    @commands.command()
+    async def steal(self, ctx):
+        messages = await ctx.history(limit=10).flatten()
+        emoji_found_tups = set()
+
+        local_emojis = []
+        if ctx.guild:
+            local_emojis = list(filter(lambda e: cleave_emoji(str(e))[1],
+                                       ctx.guild.emojis))
+
+        for message in messages:
+            for _, name, uid in find_emoji(message.content):
+                if uid not in local_emojis:
+                    emoji_found_tups.add((name, uid))
+
+            for react in message.reactions:
+                if isinstance(react.emoji, str):
+                    # This is a utf-8, non-custom emoji
+                    continue
+                for _, name, uid in find_emoji(str(react.emoji)):
+                    if uid not in local_emojis:
+                        emoji_found_tups.add((name, uid))
+
+        if len(emoji_found_tups) >= 10:
+            emoji_found_tups = emoji_found_tups[:10]
+
+        embed = embed_from_emoji_tups(emoji_found_tups)
+        await ctx.send(embed=embed)
+
+
+    @commands.command(hidden=True)
+    async def echo(self, ctx):
+        _, msg = ctx.message.content.split(' ', 1)
+        # This will escape emojis and Markdown
+        msg = re.sub(r'([\\\<\>\:`_\*\~\|])', r'\\\1', msg)
+        await ctx.send(content=msg)

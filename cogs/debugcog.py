@@ -31,23 +31,21 @@ class DebugCog(commands.Cog):
         try:
             raise error
 
-        except BaseException as e:
-            log.error('context     cog : %s', ctx.cog)
-            log.error('context  author : %s', str(ctx.author))
-            log.error('context msgtext : %s', ctx.message.content)
+        finally:
+            cls = error.__class__.__name__
+            msg = str(error)
 
-            cls = e.__class__.__name__
-            msg = str(e)
+            log.error('%s: %s | cog: %s, author: %s, text: %s',
+                      cls, msg, ctx.cog, str(ctx.author), ctx.message.content)
+
             tb = traceback.format_exc()
-
-            log.error('%s: %s', cls, msg)
-            log.error(tb)
+            log.error(f'%s: %s', cls, tb)
 
             if DEBUGGING:
                 msg = f'{cls}: {msg}```\n{tb}```'
                 await ctx.send(content=msg)
 
-        finally:
+        # finally:
             if not DEBUGGING:
                 return
             if not self.halting:
@@ -78,7 +76,7 @@ class DebugCog(commands.Cog):
 
     @commands.command(hidden=True)
     async def die(self, ctx):
-        if not DEBUGGING:
+        if not (DEBUGGING or await self.bot.is_owner(ctx.author)):
             return
         await ctx.send('Bot closing.')
         await self.bot.close()

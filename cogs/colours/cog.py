@@ -113,12 +113,12 @@ def make_colour_embed(r, g, b, title=None, desc=None):
                          description=desc)
 
 
-async def assign_new_colour(member, mutate_or_reroll):
+async def assign_new_colour(member, action, retry=True):
     username = str(member)
     role = get_role(member)
 
     newcol = make_random_color()
-    if mutate_or_reroll is 'mutate':
+    if action is 'mutate':
         if not role:
             return None
         newcol = make_mutated_color(role.colour)
@@ -133,7 +133,7 @@ async def assign_new_colour(member, mutate_or_reroll):
             attempts += 1
 
             # If no role, make new from random colour
-            if mutate_or_reroll is 'reroll' and not role:
+            if action is 'reroll' and not role:
                 log.info('Creating colour role for %s with %s', username, new)
                 role = await member.guild.create_role(
                     name=username,
@@ -143,23 +143,29 @@ async def assign_new_colour(member, mutate_or_reroll):
                 await member.add_roles(role, reason='assign colour role')
 
             # If have role, update Discord API
-            elif mutate_or_reroll in ['reroll', 'mutate']:
+            elif action in ['reroll', 'mutate']:
                 old = fmt.format(*role.colour.to_rgb())
-                msg = f"{mutate_or_reroll.title()} new colour {old} -> {new}"
+                msg = f"{action.title()} new colour {old} -> {new}"
                 log.info(msg + ' for %s', username)
                 await role.edit(colour=newcol, reason=msg)
 
             else:
-                log.error('Aborting unsupported action: %s', mutate_or_reroll)
-                raise NotImplementedError(f'{mutate_or_reroll}')
+                log.error('Aborting unsupported action: %s', action)
+                raise NotImplementedError(f'{action}')
 
             return newcol
 
         except HTTPException as e:
+            if not retry:
+                log.info('Failed to %s for %s, aborting without retry',
+                         action,
+                         username)
+                return None
+
             timeout = min(5, log_http_exception(e))
             await asleep(timeout)
 
-    log.error('Failed to %s for %s after 3 tries', mutate_or_reroll, username)
+    log.error('Failed to %s for %s after 3 tries', action, username)
     return None
 
 
@@ -316,7 +322,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
                      hms)
             return
 
-        newcol = await assign_new_colour(member, 'reroll')
+        async with ctx.typing():
+            newcol = await assign_new_colour(member, 'reroll')
+
         if not newcol:
             msg = ("I couldn't assign you a new colour. This could be due to "
                    "Discord's rate limits, so try again later.")
@@ -480,7 +488,7 @@ class Colours(DatabaseCogMixin, commands.Cog):
         if frozen:
             return
 
-        newcol = await assign_new_colour(member, 'mutate')
+        newcol = await assign_new_colour(member, 'mutate', retry=False)
 
         if not newcol:
             return

@@ -4,7 +4,7 @@ from appconfig import DEBUGGING
 
 from .debugcog import DebugCog
 from .generalcog import General
-from .emojistats.cog import EmojiStatsCog
+from .emojistats.cog import EmojiTools
 
 from .colours.cog import Colours
 from .kingsraid.cog import KrSearch
@@ -21,7 +21,7 @@ ENABLED_COGS = [
     DebugCog,
     General,
     Colours,
-    EmojiStatsCog,
+    EmojiTools,
     KrSearch,
     DanbooruSearch,
     PublishSubscribe,

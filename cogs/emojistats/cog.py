@@ -55,7 +55,7 @@ def cleave_emoji(emoji_str):
     return name, uid
 
 
-class EmojiStatsCog(DatabaseCogMixin, commands.Cog):
+class EmojiTools(DatabaseCogMixin, commands.Cog):
     """
     Stats for emoji nerds
     """

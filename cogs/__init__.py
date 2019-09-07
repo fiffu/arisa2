@@ -12,6 +12,7 @@ from .cardboard.cog import DanbooruSearch
 from .publishsubscribecog import PublishSubscribe
 from .plugtracker.kingsraidcog import PlugKingsRaid
 from .plugtracker.browndustcog import PlugBrownDust
+from .tracking.twitchcog import TwitchMogra
 
 
 log = logging.getLogger(__name__)
@@ -25,4 +26,5 @@ ENABLED_COGS = [
     PublishSubscribe,
     PlugKingsRaid,
     PlugBrownDust,
+    TwitchMogra,
 ]

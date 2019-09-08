@@ -29,6 +29,8 @@ TWITCH_CLIENT_ID = appconfig.fetch('TWITCH', 'CLIENT_ID')
 TWITCH_ENDPOINT_STREAMS = 'https://api.twitch.tv/helix/streams'
 TWITCH_ENDPOINT_USERS = 'https://api.twitch.tv/helix/users'
 
+MOGRA_HOURS_JST = [23.00, 05.00]
+
 log = logging.getLogger(__name__)
 CACHED = dict()
 
@@ -38,12 +40,6 @@ class Stream:
         # Initializing attribs like this will destroy your pylint score
         for k, v in kwargs.items():
             setattr(self, k, v)
-
-
-    @property
-    def update_interval_secs(self):
-        """Override so we know within the minute when stream goes up."""
-        return 60
 
 
     @property
@@ -95,7 +91,8 @@ class TwitchMogra(TrackerCog):
 
     @property
     def update_interval_secs(self):
-        return 30
+        """Override so we know within the minute when stream goes up."""
+        return 60
 
 
     @property
@@ -107,6 +104,9 @@ class TwitchMogra(TrackerCog):
         """Is it past 11pm on the first Saturday of the month?"""
         day, dayofweek, hour = datetime.utcnow().strftime('%d %w %H').split()
 
+        # Convert JST to UTC
+        start, end = [(h - 9) % 24 for h in MOGRA_HOURS_JST]
+
         if not (dayofweek == '6'):
             # Fail if not Saturday
             return False
@@ -115,9 +115,12 @@ class TwitchMogra(TrackerCog):
             # Fail if not first week of month
             return False
 
-        if not (int(hour) >= 14):
+        if not (int(hour) >= start):
             # Fail if not 11pm or later in Japan Time (UTC+0900)
             # starts at 2300 UTC+9 or 1400 UTC+0
+            return False
+
+        if not (int(hour) < end):
             return False
 
         return True

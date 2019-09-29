@@ -1,2 +1,7 @@
 appconfig/config.conf
 __pycache__
+
+# Don't deploy machine environment
+.env
+bin/*
+*.log

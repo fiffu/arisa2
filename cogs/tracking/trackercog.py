@@ -3,14 +3,16 @@ import logging
 from typing import Sequence
 
 import aiohttp
-
 from discord.ext import commands, tasks
+from selenium import webdriver
 
+import appconfig
 from . import config
-
 
 UPDATE_INTERVAL_SECS = config.TRACKER_UPDATE_INTERVAL_SECS
 TIMEOUT_SECS = config.TRACKER_TIMEOUT_SECS
+
+CHROME_DRIVER_PATH = appconfig.fetch('GOOGLE_CHROME_BIN')
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ class TrackerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.aiohttp_timeout_secs = TIMEOUT_SECS
+        self.timeout_secs = TIMEOUT_SECS
         self.aiohttp_session = aiohttp.ClientSession()
 
         interval = self.update_interval_secs
@@ -121,7 +123,7 @@ class TrackerCog(commands.Cog):
             param=[('key', val1), ('key', val2), ('key', val3)]
         """
         session = session or self.aiohttp_session
-        timeout = timeout or self.aiohttp_timeout_secs
+        timeout = timeout or self.timeout_secs
         return await session.get(url,
                                  headers=headers,
                                  params=params,
@@ -157,3 +159,37 @@ class TrackerCog(commands.Cog):
     def _derived_name(self):
         """The name of the subclass derived from this cog"""
         return type(self).__name__
+
+
+
+class SeleniumTrackerCog(TrackerCog):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        del self.aiohttp_session
+
+        self.driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH)
+
+
+    async def async_get(self, url, driver=None):
+        """Awaitable wrapper over the synchronous driver.get()"""
+        driver = driver or self.driver
+        return driver.get(url)
+
+
+    async def fetch(self,
+                    url,
+                    driver=None,
+                    timeout=None):
+        driver = driver or self.driver
+        timeout = timeout or self.timeout_secs
+
+        try:
+            task = self.async_get(url, driver)
+            await asyncio.wait_for(task, timeout=timeout)
+        except asyncio.TimeoutError:
+            pass
+
+
+    async def batch_get_urls(self, *args, **kwargs):
+        raise NotImplementedError('Not supported on Selenium drivers')

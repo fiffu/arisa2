@@ -12,7 +12,7 @@ from . import config
 UPDATE_INTERVAL_SECS = config.TRACKER_UPDATE_INTERVAL_SECS
 TIMEOUT_SECS = config.TRACKER_TIMEOUT_SECS
 
-CHROME_DRIVER_PATH = appconfig.fetch('GOOGLE_CHROME_BIN')
+CHROME_DRIVER_PATH = appconfig.from_env('GOOGLE_CHROME_BIN')
 
 log = logging.getLogger(__name__)
 
@@ -168,7 +168,18 @@ class SeleniumTrackerCog(TrackerCog):
 
         del self.aiohttp_session
 
-        self.driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH)
+        self.driver = None
+
+
+    async def setup_driver(self):
+        if self.driver:
+            return
+
+        driveroptions = webdriver.chrome.options.Options()
+        driveroptions.headless = True
+        log.info('Setting up driver')
+        self.driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH,
+                                       options=driveroptions)
 
 
     async def async_get(self, url, driver=None):
@@ -181,7 +192,11 @@ class SeleniumTrackerCog(TrackerCog):
                     url,
                     driver=None,
                     timeout=None):
-        driver = driver or self.driver
+        if not driver:
+            if not self.driver:
+                await self.setup_driver()
+            driver = self.driver
+
         timeout = timeout or self.timeout_secs
 
         try:
@@ -189,6 +204,15 @@ class SeleniumTrackerCog(TrackerCog):
             await asyncio.wait_for(task, timeout=timeout)
         except asyncio.TimeoutError:
             pass
+
+        return self.driver.page_source
+
+
+    async def refresh(self):
+        if not self.driver:
+            return
+        self.driver.refresh()
+        return self.driver.page_source
 
 
     async def batch_get_urls(self, *args, **kwargs):

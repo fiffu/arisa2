@@ -46,4 +46,9 @@ def fetch(section, option=None, check_env=True, cast_to=None):
 
     return value
 
+
+def from_env(key):
+    return os.environ.get(key)
+
+
 DEBUGGING = fetch('BOT', 'DEBUGGING', cast_to=bool)

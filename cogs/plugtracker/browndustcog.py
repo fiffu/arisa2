@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import logging
-from typing import Mapping, Sequence
-
 from cogs.tracking.trackercog import TrackerCog
-from .plugmixin import PlugMixin, PlugPost
-
-
-log = logging.getLogger(__name__)
+from .plugmixin import PlugMixin
 
 
 TOPIC = 'bdplug'
@@ -22,7 +16,7 @@ URLS = {
 
 class PlugBrownDust(PlugMixin, TrackerCog):
     @property
-    def plug_forum_name_urls(self) -> Mapping[str, str]:
+    def plug_forum_name_urls(self):
         """Mapping[forumName, forumUrl]"""
         return URLS
 

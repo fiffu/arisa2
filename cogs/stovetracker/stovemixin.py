@@ -8,10 +8,14 @@ from discord import Embed
 
 from cogs.tracking.config import TRACKER_UPDATE_INTERVAL_SECS
 
-TRACKER_UPDATE_INTERVAL_SECS = 60 * 60 * 24 * 5  # 5 days
 Url = str
 
 log = logging.getLogger(__name__)
+
+
+# Driver takes 30+ secs to get one page, so make the interval at least 60 secs
+# This should change when bulk fetch is implementated on SeleniumTrackerCog
+TRACKER_UPDATE_INTERVAL_SECS = max(60, TRACKER_UPDATE_INTERVAL_SECS)
 
 
 
@@ -66,7 +70,6 @@ class StovePost(object):
             self._image_url = 'https://i.imgur.com/iqv0kEr.png'
 
         return self._image_url
-
 
 
     @property
@@ -159,10 +162,8 @@ class StoveMixin:
                      f'subscribers to be notified.')
             return
 
-
         posts = sorted(new_posts, key=lambda p: p.timestamp)
         if not posts:
-            log.critical('No new posts')
             return
 
         s = 's' if len(posts) != 1 else ''
@@ -173,7 +174,6 @@ class StoveMixin:
             for post in posts
         ]
         await pscog.push_to_topic(self.topic, sendargs)
-
 
 
     async def do_work(self) -> Sequence[StovePost]:
@@ -199,7 +199,6 @@ class StoveMixin:
 
         if posts:
             new_posts = self.filtered(posts)
-            log.critical(new_posts)
             await self.handle_new_posts(new_posts)
 
         return True
@@ -228,10 +227,9 @@ class StoveMixin:
 
         resps = []
         start = datetime.datetime.now()
-        log.info('start bulk fetch')
         for url in urls:
             src = await self.fetch(url)
             resps.append(src)
         elapsed_secs = (datetime.datetime.now() - start).total_seconds()
-        log.info('end bulk fetch (t=%ss)', elapsed_secs)
+        log.info('Pulled %s pages (t=%ss)', len(urls), elapsed_secs)
         return resps

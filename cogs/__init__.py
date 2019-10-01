@@ -12,6 +12,7 @@ from .cardboard.cog import DanbooruSearch
 from .publishsubscribecog import PublishSubscribe
 from .plugtracker.kingsraidcog import PlugKingsRaid
 from .plugtracker.browndustcog import PlugBrownDust
+from .stovetracker.epicsevencog import StoveEpicSeven
 from .tracking.twitchcog import TwitchMogra
 
 
@@ -26,5 +27,6 @@ ENABLED_COGS = [
     PublishSubscribe,
     PlugKingsRaid,
     PlugBrownDust,
+    StoveEpicSeven,
     TwitchMogra,
 ]

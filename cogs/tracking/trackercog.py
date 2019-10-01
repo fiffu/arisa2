@@ -3,14 +3,22 @@ import logging
 from typing import Sequence
 
 import aiohttp
-
 from discord.ext import commands, tasks
+from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+
+import appconfig
 from . import config
-
 
 UPDATE_INTERVAL_SECS = config.TRACKER_UPDATE_INTERVAL_SECS
 TIMEOUT_SECS = config.TRACKER_TIMEOUT_SECS
+
+CHROME_BINARY_PATH = appconfig.from_env('GOOGLE_CHROME_BIN')
 
 log = logging.getLogger(__name__)
 
@@ -30,14 +38,20 @@ class TrackerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.aiohttp_timeout_secs = TIMEOUT_SECS
-        self.aiohttp_session = aiohttp.ClientSession()
+        self.timeout_secs = TIMEOUT_SECS
 
         interval = self.update_interval_secs
         log.info('[%s] Starting update check loop, interval: %s sec',
                  self._derived_name, interval)
         self._task = tasks.loop(seconds=interval)(self.task)
         self._task.start()
+
+
+    @property
+    def aiohttp_session(self):
+        if not hasattr(self, '_aiohttp_session'):
+            self._aiohttp_session = aiohttp.ClientSession()
+        return self._aiohttp_session
 
 
     @property
@@ -121,7 +135,7 @@ class TrackerCog(commands.Cog):
             param=[('key', val1), ('key', val2), ('key', val3)]
         """
         session = session or self.aiohttp_session
-        timeout = timeout or self.aiohttp_timeout_secs
+        timeout = timeout or self.timeout_secs
         return await session.get(url,
                                  headers=headers,
                                  params=params,
@@ -157,3 +171,86 @@ class TrackerCog(commands.Cog):
     def _derived_name(self):
         """The name of the subclass derived from this cog"""
         return type(self).__name__
+
+
+
+class SeleniumTrackerCog(TrackerCog):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.driver = None
+
+
+    @property
+    def aiohttp_session(self):
+        return None
+
+
+    async def setup_driver(self):
+        if self.driver:
+            return
+
+        driveroptions = webdriver.chrome.options.Options()
+        driveroptions.add_argument('--headless')
+        # driveroptions.binary_location = CHROME_BINARY_PATH
+
+        exe_location = CHROME_BINARY_PATH
+        if '/app/.apt/' in appconfig.from_env('PATH'):
+            # Using options given in by Heroku's Chrome buildpack
+            # https://github.com/heroku/heroku-buildpack-google-chrome
+            exe_location = 'chromedriver'
+            # driveroptions.add_argument('--disable-gpu')
+            # driveroptions.add_argument('--no-sandbox')
+            # driveroptions.add_argument('--remote-debugging-port=9222')
+
+        log.info('Setting up driver with location: %s', exe_location)
+        try:
+            self.driver = webdriver.Chrome(executable_path=exe_location,
+                                           options=driveroptions)
+        except WebDriverException as e:
+            log.error('Failed to start driver (%s)', e)
+            raise
+
+
+    async def async_get(self, url, driver=None):
+        """Awaitable wrapper over the synchronous driver.get()"""
+        driver = driver or self.driver
+        return driver.get(url)
+
+
+    async def fetch(self,
+                    url,
+                    driver=None,
+                    timeout=None,
+                    wait=0):
+        if not driver:
+            if not self.driver:
+                await self.setup_driver()
+            driver = self.driver
+
+        timeout = timeout or self.timeout_secs
+
+        try:
+            task = self.async_get(url, driver)
+            await asyncio.wait_for(task, timeout=timeout)
+            if wait:
+                await asyncio.sleep(wait)
+        except asyncio.TimeoutError:
+            return None
+
+        return self.driver.page_source
+
+
+    async def refresh(self, wait=0):
+        if not self.driver:
+            return
+
+        self.driver.refresh()
+        if wait:
+            await asyncio.sleep(wait)
+
+        return self.driver.page_source
+
+
+    async def batch_get_urls(self, *args, **kwargs):
+        raise NotImplementedError('Not supported on Selenium drivers')

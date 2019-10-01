@@ -12,7 +12,7 @@ from . import config
 UPDATE_INTERVAL_SECS = config.TRACKER_UPDATE_INTERVAL_SECS
 TIMEOUT_SECS = config.TRACKER_TIMEOUT_SECS
 
-CHROME_DRIVER_PATH = appconfig.from_env('GOOGLE_CHROME_BIN')
+CHROME_DRIVER_PATH = appconfig.from_env('GOOGLE_CHROME_SHIM')
 
 log = logging.getLogger(__name__)
 
@@ -176,7 +176,14 @@ class SeleniumTrackerCog(TrackerCog):
             return
 
         driveroptions = webdriver.chrome.options.Options()
-        driveroptions.headless = True
+        driveroptions.binary_location = CHROME_DRIVER_PATH
+        # Using args given in by Heroku's Chrome buildpack
+        # https://github.com/heroku/heroku-buildpack-google-chrome
+        driveroptions.add_argument('--headless')
+        driveroptions.add_argument('--disable-gpu')
+        driveroptions.add_argument('--no-sandbox')
+        driveroptions.add_argument('--remote-debugging-port=9222')
+
         log.info('Setting up driver')
         self.driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH,
                                        options=driveroptions)

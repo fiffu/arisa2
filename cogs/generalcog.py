@@ -1,3 +1,4 @@
+from asyncio import sleep as asleep
 import logging
 import random
 import re
@@ -118,5 +119,7 @@ class General(commands.Cog):
             "I'm not legally allowed to comment on that.",
         ]
 
-        reply = random.choice(ANSWERS)
-        await ctx.send(content=reply)
+        async with ctx.typing():
+            await asleep(1)
+            reply = random.choice(ANSWERS)
+            await ctx.send(content=reply)

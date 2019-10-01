@@ -184,7 +184,7 @@ class StoveMixin:
 
         for page in pages:
             soup = BeautifulSoup(page, 'html.parser')
-
+            log.critical(page)
             forum_name = soup.find('h3', class_='page--content__title').text
             forum_url = self.stove_forum_name_urls.get(forum_name)
 

@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 TRACKER_UPDATE_INTERVAL_SECS = max(60, TRACKER_UPDATE_INTERVAL_SECS)
 
 
-
 class StovePost(object):
     def __init__(self, soup, forum_name, forum_url):
         self.soup = soup
@@ -184,7 +183,7 @@ class StoveMixin:
 
         for page in pages:
             soup = BeautifulSoup(page, 'html.parser')
-            log.critical(page)
+
             forum_name = soup.find('h3', class_='page--content__title').text
             forum_url = self.stove_forum_name_urls.get(forum_name)
 
@@ -227,9 +226,11 @@ class StoveMixin:
 
         resps = []
         start = datetime.datetime.now()
+
         for url in urls:
-            src = await self.fetch(url)
+            src = await self.fetch(url, wait=10)
             resps.append(src)
+
         elapsed_secs = (datetime.datetime.now() - start).total_seconds()
         log.info('Pulled %s pages (t=%ss)', len(urls), elapsed_secs)
         return resps

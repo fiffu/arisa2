@@ -5,6 +5,12 @@ from typing import Sequence
 import aiohttp
 from discord.ext import commands, tasks
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 
 import appconfig
 from . import config
@@ -33,13 +39,19 @@ class TrackerCog(commands.Cog):
         self.bot = bot
 
         self.timeout_secs = TIMEOUT_SECS
-        self.aiohttp_session = aiohttp.ClientSession()
 
         interval = self.update_interval_secs
         log.info('[%s] Starting update check loop, interval: %s sec',
                  self._derived_name, interval)
         self._task = tasks.loop(seconds=interval)(self.task)
         self._task.start()
+
+
+    @property
+    def aiohttp_session(self):
+        if not hasattr(self, '_aiohttp_session'):
+            self._aiohttp_session = aiohttp.ClientSession()
+        return self._aiohttp_session
 
 
     @property
@@ -166,9 +178,12 @@ class SeleniumTrackerCog(TrackerCog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        del self.aiohttp_session
-
         self.driver = None
+
+
+    @property
+    def aiohttp_session(self):
+        return None
 
 
     async def setup_driver(self):
@@ -176,17 +191,25 @@ class SeleniumTrackerCog(TrackerCog):
             return
 
         driveroptions = webdriver.chrome.options.Options()
-        # Using options given in by Heroku's Chrome buildpack
-        # https://github.com/heroku/heroku-buildpack-google-chrome
-        driveroptions.binary_location = CHROME_BINARY_PATH
         driveroptions.add_argument('--headless')
-        driveroptions.add_argument('--disable-gpu')
-        driveroptions.add_argument('--no-sandbox')
-        driveroptions.add_argument('--remote-debugging-port=9222')
+        # driveroptions.binary_location = CHROME_BINARY_PATH
 
-        log.info('Setting up driver')
-        self.driver = webdriver.Chrome(executable_path="chromedriver",
-                                       options=driveroptions)
+        exe_location = CHROME_BINARY_PATH
+        if '/app/.apt/' in appconfig.from_env('PATH'):
+            # Using options given in by Heroku's Chrome buildpack
+            # https://github.com/heroku/heroku-buildpack-google-chrome
+            exe_location = 'chromedriver'
+            # driveroptions.add_argument('--disable-gpu')
+            # driveroptions.add_argument('--no-sandbox')
+            # driveroptions.add_argument('--remote-debugging-port=9222')
+
+        log.info('Setting up driver with location: %s', exe_location)
+        try:
+            self.driver = webdriver.Chrome(executable_path=exe_location,
+                                           options=driveroptions)
+        except WebDriverException as e:
+            log.error('Failed to start driver (%s)', e)
+            raise
 
 
     async def async_get(self, url, driver=None):
@@ -198,7 +221,8 @@ class SeleniumTrackerCog(TrackerCog):
     async def fetch(self,
                     url,
                     driver=None,
-                    timeout=None):
+                    timeout=None,
+                    wait=0):
         if not driver:
             if not self.driver:
                 await self.setup_driver()
@@ -209,16 +233,22 @@ class SeleniumTrackerCog(TrackerCog):
         try:
             task = self.async_get(url, driver)
             await asyncio.wait_for(task, timeout=timeout)
+            if wait:
+                await asyncio.sleep(wait)
         except asyncio.TimeoutError:
-            pass
+            return None
 
         return self.driver.page_source
 
 
-    async def refresh(self):
+    async def refresh(self, wait=0):
         if not self.driver:
             return
+
         self.driver.refresh()
+        if wait:
+            await asyncio.sleep(wait)
+
         return self.driver.page_source
 
 

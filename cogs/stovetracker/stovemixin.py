@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 # This should change when bulk fetch is implementated on SeleniumTrackerCog
 TRACKER_UPDATE_INTERVAL_SECS = max(60, TRACKER_UPDATE_INTERVAL_SECS)
 
+TRACKER_UPDATE_INTERVAL_SECS = 60 * 60 * 3  # 3 hours
 
 class StovePost(object):
     def __init__(self, soup, forum_name, forum_url):
@@ -95,10 +96,9 @@ class StovePost(object):
 
         dateelem = self.soup.find('td', class_='table__td td-date')
         datestr = dateelem.find('time').attrs.get('datetime')
-        # Datetime instance in html seems to be given in UTC-4 (Eastern),
-        # even though the timestamp given doesn't state the tz
-        datestr += '-0400'
-        dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M%z')
+        
+        dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
+        # dt = dt.astimezone(datetime.timezone.utc)
 
         self._timestamp = dt
         return self._timestamp

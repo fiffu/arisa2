@@ -97,7 +97,7 @@ class StovePost(object):
         datestr = dateelem.find('time').attrs.get('datetime')
         
         dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
-        # dt = dt.astimezone(datetime.timezone.utc)
+        dt = dt.astimezone(datetime.timezone.utc)
 
         self._timestamp = dt
         return self._timestamp

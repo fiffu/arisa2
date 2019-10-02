@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 # This should change when bulk fetch is implementated on SeleniumTrackerCog
 TRACKER_UPDATE_INTERVAL_SECS = max(60, TRACKER_UPDATE_INTERVAL_SECS)
 
-TRACKER_UPDATE_INTERVAL_SECS = 60 * 60 * 3  # 3 hours
 
 class StovePost(object):
     def __init__(self, soup, forum_name, forum_url):

@@ -95,10 +95,9 @@ class StovePost(object):
 
         dateelem = self.soup.find('td', class_='table__td td-date')
         datestr = dateelem.find('time').attrs.get('datetime')
-        # Datetime instance in html seems to be given in UTC-4 (Eastern),
-        # even though the timestamp given doesn't state the tz
-        datestr += '-0400'
-        dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M%z')
+        
+        dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
+        # dt = dt.astimezone(datetime.timezone.utc)
 
         self._timestamp = dt
         return self._timestamp

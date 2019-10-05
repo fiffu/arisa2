@@ -31,8 +31,20 @@ from selenium import webdriver
 
 # Heroku's buildpacks will provision env vars for the binary
 # Example: https://github.com/heroku/heroku-buildpack-google-chrome
-driverpath = os.environ.get('GOOGLE_CHROME_BIN')
+driverpath = os.environ.get('GOOGLE_CHROME_BIN') or 'chromedriver'
 
-driver = webdriver.Chrome(executable_path=driverpath)
+# Define options suitable for running on Heroku
+driveroptions = webdriver.chrome.options.Options()
+driveroptions.add_argument('--headless')
+
+# Starting the driver may take several seconds.
+driver = webdriver.Chrome(executable_path=driverpath,
+                          options=driveroptions)
+
+# Once driver loads, you can GET stuff. Note that the driver's state doesn't
+# seem to be threadsafe; you should spin up/fork multiple drivers per thread.
+# The JavaScript may take time to eval too, so you may have to add a sleep
+# before checking the source/DOM.
 driver.get('https://httpbin.org/')
+print(driver.page_source)
 ```

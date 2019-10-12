@@ -95,9 +95,11 @@ class StovePost(object):
 
         dateelem = self.soup.find('td', class_='table__td td-date')
         datestr = dateelem.find('time').attrs.get('datetime')
-        
+
         dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
         # dt = dt.astimezone(datetime.timezone.utc)
+
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
 
         self._timestamp = dt
         return self._timestamp
@@ -181,19 +183,28 @@ class StoveMixin:
         posts = []
 
         for page in pages:
-            soup = BeautifulSoup(page, 'html.parser')
+            try:
+                soup = BeautifulSoup(page, 'html.parser')
 
-            forum_name = soup.find('h3', class_='page--content__title').text
-            forum_url = self.stove_forum_name_urls.get(forum_name)
+                forum_name = soup.find('h3', class_='page--content__title').text
+                forum_url = self.stove_forum_name_urls.get(forum_name)
 
-            container = soup.find('div', class_='page--board')
-            elems = container.find_all('tr', class_='checkbox')
+                container = soup.find('div', class_='page--board')
+                elems = container.find_all('tr', class_='checkbox')
 
-            # log.info(f'Forum: {forum_name} - {len(post_divs)} posts')
+                # log.info(f'Forum: {forum_name} - {len(post_divs)} posts')
 
-            for elem in elems:
-                post = StovePost(elem, forum_name, forum_url)
-                posts.append(post)
+                for elem in elems:
+                    post = StovePost(elem, forum_name, forum_url)
+                    posts.append(post)
+            except BaseException as e:
+                url = ''
+                try:
+                    url = f' at {forum_url}'
+                except NameError:
+                    pass
+                cls = e.__class__.__name__
+                log.error('Failed to parse page{url} ({cls}: {e})')
 
         if posts:
             new_posts = self.filtered(posts)

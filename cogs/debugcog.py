@@ -75,6 +75,14 @@ class DebugCog(commands.Cog):
 
 
     @commands.command(hidden=True)
+    async def echo(self, ctx):
+        m = ctx.message
+        await ctx.send(m)
+        await ctx.send(m.content)
+        await ctx.send(f'```{m.content}```')
+
+
+    @commands.command(hidden=True)
     async def die(self, ctx):
         if not (DEBUGGING or await self.bot.is_owner(ctx.author)):
             return

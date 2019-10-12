@@ -79,7 +79,7 @@ class EpicSeven(commands.Cog):
 
         lines = []
         for (team, first, second) in choices:
-            teamstr = ', '.join(digest(name.title(), dot='.') for name in team)
+            teamstr = ', '.join(digest(name.title(), dot=' ') for name in team)
             total = first[0] + second[0]
             line = f'> +{total:<2}: {teamstr}\n'
             msglen += len(line)
@@ -102,6 +102,13 @@ class EpicSeven(commands.Cog):
         """Lab morale calculator."""
         heronames = [h.strip()
                      for h in ' '.join(heronames).lower().split(',')]
+
+        if heronames.count('?') > 2:
+            await ctx.send("You can only use up to two unconstrained slots! "
+                           "You'll get a faster answer if you provide "
+                           "constraints, such as `?sw` to allow only soul "
+                           "weavers in that slot in the team.")
+            return
 
         choices, whitelists = calculator(*heronames, maxteams=maxteams)
 

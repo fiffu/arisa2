@@ -1,5 +1,6 @@
 from collections import defaultdict
 import itertools
+import os.path
 import json
 import re
 import warnings
@@ -7,23 +8,11 @@ import warnings
 import requests
 
 from utils import DigestDict
+from .specialtychange import SPEC_CHANGE
 
 
 SRC = 'lab.json'
 # JSON data gratefully obtained from epicseventools.com
-
-
-SPEC_CHANGE = {
-    'lorina': 'commander lorina',
-    'montmorancy': 'angelic montmorancy',
-    'hazel': 'mascot hazel',
-    'carrot': 'researcher carrot',
-    'kluri': 'falconer kluri',
-    'roozid': 'righteous thief roozid',
-    'butcher corps inquisitor': 'chaos sect inquisitor',
-    'church of ilryos axe': 'chaos sect axe',
-}
-
 
 class Constraint:
     keys = 'any,defbreak,knight,mage,ranger,soul weaver,thief,warrior'
@@ -45,7 +34,6 @@ Constraint = Constraint()
 
 
 HEROES = None
-BEST_CHAT_YIELD_CACHE = dict()  # Map[str: List[Tuple[str, int]]]
 
 # def load():
 #     global HEROES
@@ -82,14 +70,32 @@ BEST_CHAT_YIELD_CACHE = dict()  # Map[str: List[Tuple[str, int]]]
 #     HEROES = heroes
 #     return heroes
 
-def load_json(file):
-    with open(file) as f:
-        return json.load(f)
+# BEST_CHAT_YIELD_CACHE = dict()  # Map[str: List[Tuple[str, int]]]
+# def best_candidates_for_option(chatoption, pool=None):
+#     """
+#     (chatoption: str, pool: dict) -> list(tuple(gain: int, heroname: str))
+#     """
+#     if pool:
+#         gains = [(v[chatoption], k) for k, v in pool.items()]
+#         return gains
+
+#     if chatoption not in BEST_CHAT_YIELD_CACHE:
+#         gains = [(v[chatoption], k) for k, v in HEROES.items()]
+#         BEST_CHAT_YIELD_CACHE[chatoption] = sorted(gains, reverse=True)
+
+#     return BEST_CHAT_YIELD_CACHE[chatoption]
 
 
 def pluckfrom(iterable):
     for i, item in enumerate(iterable):
         yield item, iterable[0:i] + iterable[i + 1:]
+
+
+def load_json(file):
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    filepath = os.path.join(basedir, file)
+    with open(filepath) as f:
+        return json.load(f)
 
 
 def load():
@@ -100,10 +106,20 @@ def load():
     heroes = DigestDict()
     for hero in jsondata:
         try:
-            hero.update(hero['Reactions'])
-            name = hero['Name'].lower()
-            hero['Class'] = hero['Class'].replace('-', ' ')  # for soul-weaver
-            heroes.add(name, hero)
+            ok = all(list(hero.get(k) for k in ['Reactions', 'Options']))
+            if not ok:
+                continue
+            hero.update(hero.pop('Reactions'))
+
+            c1, c2 = hero.pop('Options')
+            hero['chat1'] = c1
+            hero['chat2'] = c2
+
+            cls = hero['Class'].replace('-', ' ') # soul-weaver -> soul weaver
+            hero['Class'] = cls
+
+            key = hero['Name'].lower()
+            heroes.add(key, hero)
 
         except BaseException as e:
             warnings.warn(f'Failed to parse {hero} ({e})')
@@ -113,50 +129,54 @@ def load():
     return heroes
 
 
-def best_candidates_for_option(chatoption, pool=None):
-    """
-    (chatoption: str, pool: dict) -> list(tuple(gain: int, heroname: str))
-    """
-    if pool:
-        gains = [(v[chatoption], k) for k, v in pool.items()]
-        return gains
-
-    if chatoption not in BEST_CHAT_YIELD_CACHE:
-        gains = [(v[chatoption], k) for k, v in HEROES.items()]
-        BEST_CHAT_YIELD_CACHE[chatoption] = sorted(gains, reverse=True)
-
-    return BEST_CHAT_YIELD_CACHE[chatoption]
-
-
-def calculate_morale(hero1, hero2, hero3, hero4):
+def get_heroes():
     global HEROES
     if HEROES is None:
         HEROES = load()
+    return HEROES
 
-    herolist = [hero1, hero2, hero3, hero4]
+
+def calculate_morale(hero1, hero2, hero3=None, hero4=None):
+    HEROES = get_heroes()
+
+    herolist = [HEROES[h] for h in (hero1, hero2, hero3, hero4) if h]
 
     choices = []
     for h, otherheroes in pluckfrom(herolist):
-        name, chat1, chat2 = h['name'], h['chat1'], h['chat2']
+        name, chat1, chat2 = h['Name'], h['chat1'], h['chat2']
 
-        for chat in [chat1, chat2]:
-            gain = sum([o[chat] for o in otherheroes])
+        for chat in (chat1, chat2):
+            gain = sum(o[chat] for o in otherheroes)
             choices.append((gain, name, chat))
 
-    return sorted(choices, reverse=True)
+    return sorted(choices, reverse=True)[:2]
 
 
-def filter_dict(src, criteria):
+def filter_dict(source, whitelist):
+    """Subsets the source dict using criteria in the whitelist.
+
+    The source dictionary will not be modified.
+    """
+    if not whitelist:
+        return source
+
     def accept(hero):
-        for attrib, accepts in criteria.items():
+        for attrib, accepts in whitelist.items():
             if hero.get(attrib) not in accepts:
                 return False
         return True
 
-    return {k: v for k, v in src.items() if accept(v)}
+    return {k: v for k, v in source.items() if accept(v)}
 
 
-def flag2whitelist(arg):
+def flag_to_whitelist(arg):
+    """Converts a string argument to a whitelist
+
+    Each whitelist contains a set of rules to subset HEROES by. A whitelist is
+    a dictionary of lists, created using flag_to_whitelist(). Each list
+    contains a finite range of values for the key it is assigned to, that we
+    want in the filtered output.
+    """
     if not arg.startswith('?'):
         return None
 
@@ -179,6 +199,7 @@ def flag2whitelist(arg):
 
 
 def validate_team(*heronames):
+    """False if duplicated heroes (same name, specialty change etc)"""
     # Check duplicates
     count = len(heronames)
     heronames = list(set(heronames))
@@ -194,31 +215,65 @@ def validate_team(*heronames):
     return True
 
 
-def generate_teams(*whitelists):
+def pools_to_teams(pools, maxteamsize=4):
+    if len(pools) <= maxteamsize:
+        yield from itertools.product(*pools)
+    else:
+        # If there are many pools, iterate over combinations N pools
+        # Then yield cartesian product of these N pools (N=maxteamsize)
+        for combipools in itertools.combinations(pools, maxteamsize):
+            yield from itertools.product(*combipools)
+
+
+def generate_teams(*whitelists, maxteamsize=4):
+    """Takes N whitelists and yields teams of N-long tuple(heroes); N <= 4
+
+    If 3 whitelists (Map[str, List[Any]]) are provided, then each team yielded
+    will have 3 heroes. The yielded team has to be valid according to
+    validate_team().
+
+    See also: flag_to_whitelist().
+    """
     heroes = HEROES.copy()
-    namepools = [list(filter_dict(heroes, wlist).keys())
-                 for wlist in whitelists]
-    for team in itertools.product(*namepools):
+    names = [list(filter_dict(heroes, wlist).keys())
+             for wlist in whitelists]
+
+    for team in pools_to_teams(names, maxteamsize=maxteamsize):
         if validate_team(*team):
-            print(team)
             yield team
 
 
-def query(*args):
+def query_to_pool(*args):
+    """Parses queries into List[hero] and List[whitelistdict]"""
+    HEROES = get_heroes()
+
     whitelists = []
     for arg in args:
-        whitelist = flag2whitelist(arg)
+        whitelist = flag_to_whitelist(arg)
         if whitelist:
             whitelists.append(whitelist)
         else:
             hero = HEROES[arg]
             if hero:
                 whitelists.append({'Name': [hero['Name']]})
+            else:
+                whitelists.append(None)
 
     teams = list(generate_teams(*whitelists))
     return teams, whitelists
 
 
+def calculator(*heronames, maxteams=50):
+    res = []
+    teams, whitelists = query_to_pool(*heronames)
+    for team in teams:
+        first, second = calculate_morale(*team)
+        res.append((team, first, second))
+
+    choices = sorted(res,
+                     key=lambda tup: tup[1][0] + tup[2][0],
+                     reverse=True)
+    return choices[:maxteams], whitelists
 
 
 if __name__ == '__main__':

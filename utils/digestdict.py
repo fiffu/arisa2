@@ -199,5 +199,3 @@ class DigestDict:
     def __getattr__(self, attr):
         """Handles .get(), .fromkeys() etc"""
         return getattr(self._dic, attr)
-
-

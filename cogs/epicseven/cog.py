@@ -1,6 +1,5 @@
 import logging
 
-from discord import Embed
 from discord.ext import commands
 
 from .model import calculator
@@ -93,12 +92,12 @@ class EpicSeven(commands.Cog):
 
 
     @commands.command(
-        help='Lab morale calculator. Write hero names separated by a
-             'comma `,`. Shortforms are supported, so `bell` will be treated '
-             'as `Bellona`, and `sbell` as `Seaside Bellona`. You can provide '
+        help='Lab morale calculator. Write hero names separated by a '
+             'comma. Shortforms are supported, so `bell` will be treated '
+             'as `Bellona`, and `sbell` as `Seaside Bellona`. You can give '
              'constraints instead of heroes using `?`. For example, `?mage` '
-             'will search for any Mage heroes, and `?war?def` will search for '
-             'warriors with defense break.')
+             'will search for any Mage heroes, and `?war?def` will search '
+             'for warriors with defense break.')
     async def camp(self, ctx, *heronames, maxteams=10):
         """Lab morale calculator."""
         heronames = [h.strip()

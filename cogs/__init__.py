@@ -5,9 +5,10 @@ from appconfig import DEBUGGING
 from .debugcog import DebugCog
 from .generalcog import General
 
-from .colours.cog import Colours
-from .kingsraid.cog import KrSearch
 from .cardboard.cog import DanbooruSearch
+from .colours.cog import Colours
+from .epicseven.cog import EpicSeven
+from .kingsraid.cog import KrSearch
 
 from .publishsubscribecog import PublishSubscribe
 from .plugtracker.kingsraidcog import PlugKingsRaid
@@ -23,6 +24,7 @@ ENABLED_COGS = [
     General,
     Colours,
     KrSearch,
+    EpicSeven,
     DanbooruSearch,
     PublishSubscribe,
     PlugKingsRaid,

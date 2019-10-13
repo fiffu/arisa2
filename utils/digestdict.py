@@ -55,6 +55,9 @@ class DigestDict:
 
         This method should return (str, list)
         """
+        if len(key) == 0:
+            return '', ''
+
         *heads, tail = key.split()
         prefix = ''.join(word[0] for word in heads)
 
@@ -111,7 +114,7 @@ class DigestDict:
     def candidates(self, partialkey, limit=None):
         """Returns a list of autocomplete candidates for a given key"""
         def search(items, results, limit):
-            keys = [k for k, v in sorted(items, key=lambda x: x[0].lower())]
+            keys = [k for k, v in sorted(items, key=lambda x: len(x[0]))]
             for k in keys:
                 if len(results) == limit:
                     break

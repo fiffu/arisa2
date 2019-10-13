@@ -14,84 +14,46 @@ from .specialtychange import SPEC_CHANGE
 SRC = 'lab.json'
 # JSON data gratefully obtained from epicseventools.com
 
+HEROES = None
+
+
+
+class BadConstraintError(AttributeError):
+    def __init__(self, val):
+        super().__init__("no Constraint matching '{val}'")
+        self.val = val
+
+
 class Constraint:
     keys = 'any,defbreak,knight,mage,ranger,soul weaver,thief,warrior'
     flagsdict = DigestDict()
     for key in keys.split(','):
         flagsdict[key] = key
+    flagsdict[''] = 'any'
 
     @classmethod
     def read(cls, arg):
         return cls.flagsdict[arg]
 
-    def __getattr__(self, attr):
-        val = self.flagsdict[attr]
+    def __getitem__(self, key):
+        val = self.flagsdict[key]
         if not val:
-            cls = self.__class__.__name__
-            raise AttributeError(f"object '{cls}' has no attribute 'attr'")
+            raise BadConstraintError(val)
         return val
+
+    def __getattr__(self, attr):
+        return self[attr]
 Constraint = Constraint()
 
 
-HEROES = None
-
-# def load():
-#     global HEROES
-#     with open(CSV, 'r', encoding='utf-8') as f:
-#         lines = f.readlines()
-
-#     # Discard rows until we reach the header
-#     while not lines[0].startswith('Chat1,Chat2,Hero'):
-#         lines = lines[1:]
-#     header, *rows = lines
-
-#     _, _, _, *chatoptions, _ = header.split(',')
-
-#     heroes = DigestDict()
-#     for row in rows:
-#         chat1, chat2, heroname, *chatvalues, average = row.split(',')
-#         try:
-#             assert chat1 in chatoptions, 'invalid chat option ' + repr(chat1)
-#             assert chat2 in chatoptions, 'invalid chat option ' + repr(chat2)
-#             assert len(chatvalues) == len(chatoptions)
-#         except AssertionError as e:
-#             warnings.warn(f'Failed to load {heroname} ({e})')
-#             continue
-
-#         name = ' '.join(re.findall('[A-Z][a-z]+', heroname)).lower()
-#         hero = dict(
-#             name=name,
-#             chat1=chat1,
-#             chat2=chat2,
-#         )
-#         hero.update({k: int(v) for k, v in zip(chatoptions, chatvalues)})
-#         heroes[name] = hero
-
-#     HEROES = heroes
-#     return heroes
-
-# BEST_CHAT_YIELD_CACHE = dict()  # Map[str: List[Tuple[str, int]]]
-# def best_candidates_for_option(chatoption, pool=None):
-#     """
-#     (chatoption: str, pool: dict) -> list(tuple(gain: int, heroname: str))
-#     """
-#     if pool:
-#         gains = [(v[chatoption], k) for k, v in pool.items()]
-#         return gains
-
-#     if chatoption not in BEST_CHAT_YIELD_CACHE:
-#         gains = [(v[chatoption], k) for k, v in HEROES.items()]
-#         BEST_CHAT_YIELD_CACHE[chatoption] = sorted(gains, reverse=True)
-
-#     return BEST_CHAT_YIELD_CACHE[chatoption]
-
-
 def pluckfrom(iterable):
+    """ABC -> (A,BC), (B,AC), (C,AB)"""
     for i, item in enumerate(iterable):
         yield item, iterable[0:i] + iterable[i + 1:]
 
 
 def load_json(file):
+    """Loads a json file in the same dir as this module."""
     basedir = os.path.abspath(os.path.dirname(__file__))
     filepath = os.path.join(basedir, file)
     with open(filepath) as f:
@@ -99,6 +61,7 @@ def load_json(file):
 
 
 def load():
+    """Loads hero data into the global HEROES cache"""
     global HEROES
 
     jsondata = load_json(SRC)
@@ -130,6 +93,7 @@ def load():
 
 
 def get_heroes():
+    """Gets and initializes global cache if it is empty"""
     global HEROES
     if HEROES is None:
         HEROES = load()
@@ -137,6 +101,7 @@ def get_heroes():
 
 
 def calculate_morale(hero1, hero2, hero3=None, hero4=None):
+    """Returns the top two options"""
     HEROES = get_heroes()
 
     herolist = [HEROES[h] for h in (hero1, hero2, hero3, hero4) if h]
@@ -145,11 +110,19 @@ def calculate_morale(hero1, hero2, hero3=None, hero4=None):
     for h, otherheroes in pluckfrom(herolist):
         name, chat1, chat2 = h['Name'], h['chat1'], h['chat2']
 
-        for chat in (chat1, chat2):
-            gain = sum(o[chat] for o in otherheroes)
-            choices.append((gain, name, chat))
+        for topic in (chat1, chat2):
+            gain = sum(o[topic] for o in otherheroes)
+            choices.append((gain, name, topic))
 
-    return sorted(choices, reverse=True)[:2]
+    best, *others = sorted(choices, reverse=True)
+    top2 = [best]
+    for other in others:
+        # `other` and `best` are tuples of (gain, name, topic)
+        # 2nd topic chosen be same as the topic of `best`
+        if other[-1] != best[-1]:
+            top2.append(other)
+            break
+    return top2
 
 
 def filter_dict(source, whitelist):
@@ -182,7 +155,8 @@ def flag_to_whitelist(arg):
 
     # Best-effort to find flags
     arg = ''.join(arg.split())
-    constraints = set(Constraint.read(x) for x in arg.split('?') if x)
+    constraints = set(Constraint[x] for x in arg.split('?') if x)
+
     if not constraints:
         return None
 
@@ -194,6 +168,12 @@ def flag_to_whitelist(arg):
 
         elif con == 'defbreak':
             whitelist['HasDefenseDown'].append(True)
+
+        elif con in ['', 'any']:
+            continue
+
+        else:
+            raise BadConstraintError(con)
 
     return whitelist
 
@@ -215,14 +195,27 @@ def validate_team(*heronames):
     return True
 
 
-def pools_to_teams(pools, maxteamsize=4):
-    if len(pools) <= maxteamsize:
+def pools_to_teams(pools, combisize=4):
+    """Combines pools into combisize, then yields cart. product of each combi.
+
+    Each 'pool' is a sequence. This function takes a list of pools, then
+    groups them by taking combinations of pools. Each combination will
+    consist of up to `combisize` pools. Next, the cartesian product of the
+    pools in each combination is yielded.
+
+    This function returns a generator yielding tuples of length <= combisize.
+    The tuple values are elements from the pools, not the pools.
+
+    Current behaviour is O^n, n=len(pools). It is significantly slow when
+    more than two of the `pools` consist of the entirety of HEROES
+    """
+    if len(pools) <= combisize:
         yield from itertools.product(*pools)
     else:
         # If there are many pools, iterate over combinations N pools
-        # Then yield cartesian product of these N pools (N=maxteamsize)
-        for combipools in itertools.combinations(pools, maxteamsize):
-            yield from itertools.product(*combipools)
+        # Then yield cartesian product of these N pools (N=combisize)
+        for combination in itertools.combinations(pools, combisize):
+            yield from itertools.product(*combination)
 
 
 def generate_teams(*whitelists, maxteamsize=4):
@@ -238,7 +231,7 @@ def generate_teams(*whitelists, maxteamsize=4):
     names = [list(filter_dict(heroes, wlist).keys())
              for wlist in whitelists]
 
-    for team in pools_to_teams(names, maxteamsize=maxteamsize):
+    for team in pools_to_teams(names, combisize=maxteamsize):
         if validate_team(*team):
             yield team
 
@@ -264,16 +257,21 @@ def query_to_pool(*args):
 
 
 def calculator(*heronames, maxteams=50):
-    res = []
+    def total_morale(firstchat, secondchat):
+        return firstchat[0] + secondchat[0]
+
+    choices = []
+    max_gain = 0
     teams, whitelists = query_to_pool(*heronames)
     for team in teams:
         first, second = calculate_morale(*team)
-        res.append((team, first, second))
+        gain = total_morale(first, second)
+        if gain >= max_gain:
+            # Insert team as first option and truncate results to maxteams
+            choices = [(team, first, second), *choices][:maxteams]
+            max_gain = gain
 
-    choices = sorted(res,
-                     key=lambda tup: tup[1][0] + tup[2][0],
-                     reverse=True)
-    return choices[:maxteams], whitelists
+    return choices, whitelists
 
 
 if __name__ == '__main__':

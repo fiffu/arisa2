@@ -1,8 +1,9 @@
+from functools import partial
 import logging
 
 from discord.ext import commands
 
-from .model import calculator
+from .model import BadConstraintError, calculator
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +66,13 @@ class EpicSeven(commands.Cog):
         self.bot = bot
 
 
+    async def async_calculate(self, *args, **kwargs):
+        calc = partial(calculator, *args, **kwargs)
+        loop = self.bot.loop
+        result = await loop.run_in_executor(None, calc)
+        return result
+
+
     async def find_optimum_morale(self, ctx, choices, whitelists):
         # chat1 = self.format_choice(*first, wid_l_hero, wid_l_chat)
         # chat2 = self.format_choice(*second, wid_r_hero, wid_r_chat)
@@ -93,39 +101,58 @@ class EpicSeven(commands.Cog):
 
     @commands.command(
         help='Lab morale calculator. Write hero names separated by a '
-             'comma. Shortforms are supported, so `bell` will be treated '
-             'as `Bellona`, and `sbell` as `Seaside Bellona`. You can give '
-             'constraints instead of heroes using `?`. For example, `?mage` '
-             'will search for any Mage heroes, and `?war?def` will search '
-             'for warriors with defense break.')
+             'comma.\nShortforms are supported, so "bell" will be treated '
+             'as Bellona, and "sbell" as Seaside Bellona.\n\nYou can give '
+             'constraints instead of heroes using "?". For example, ?mage '
+             'will search for any Mage heroes, and ?war?def will search '
+             'for warriors with defense break. Use a single ? to indicate '
+             'ANY hero, without constraints.\n\nSupported constraints:\n'
+             '  ?<class> (?mage, ?thief etc)\n  ?defbreak\n\n'
+             'Example:  !camp ravi, fceci, ?mage, ?war?def')
     async def camp(self, ctx, *heronames, maxteams=10):
         """Lab morale calculator."""
+        max_unconstrained = 3  # More than 3 will take forever
         heronames = [h.strip()
                      for h in ' '.join(heronames).lower().split(',')]
 
-        if heronames.count('?') > 2:
-            await ctx.send("You can only use up to two unconstrained slots! "
-                           "You'll get a faster answer if you provide "
-                           "constraints, such as `?sw` to allow only soul "
-                           "weavers in that slot in the team.")
+        unconstrained = heronames.count('?')
+        if unconstrained > max_unconstrained:
+            await ctx.send("You can only choose up to {max_unconstrained} "
+                           "unconstrained heroes! You'll get an answer much "
+                           "faster if you provide constraints, such as `?w` "
+                           "to allow only warriors in that slot in the team.")
             return
 
-        choices, whitelists = calculator(*heronames, maxteams=maxteams)
+        if unconstrained > 2:
+            await ctx.send('Hang on -- this will literally take a minute...')
+
+        try:
+            choices, whitelists = await self.async_calculate(*heronames,
+                                                             maxteams=maxteams)
+        except BadConstraintError as e:
+            await ctx.send(f'No such constraint: "?{e.val}"')
+            return
+
+        if not choices:
+            await ctx.send("Hmm, looks like something's wrong with your "
+                           "query! Check if you have duplicated hero and "
+                           "try again!")
+            return
 
         if len(choices) != 1:
             await self.find_optimum_morale(ctx, choices, whitelists)
-
-        else:
-            team, first, second = choices[0]
-            total = first[0] + second[0]
-            lines = [f'> **{total:>2}** morale:']
-            for chat in [first, second]:
-                gain, name, topic = chat
-                topic = ' '.join(topic.split('-')).title()
-                lines.append(f'> {gain:>2} from {name.title()} - {topic}')
-            body = '\n'.join(lines)
-
-            team = [f'**{t.title()}**' for t in team]
-            header = f'> Camping with {conjunctify(team, oxford=False)}:\n'
-            await ctx.send(header + body)
             return
+
+        team, first, second = choices[0]
+        total = first[0] + second[0]
+        lines = [f'> **{total:>2}** morale:']
+        for chat in [first, second]:
+            gain, name, topic = chat
+            topic = ' '.join(topic.split('-')).title()
+            lines.append(f'> {gain:>2} from {name.title()} - {topic}')
+        body = '\n'.join(lines)
+
+        team = [f'**{t.title()}**' for t in team]
+        header = f'> Camping with {conjunctify(team, oxford=False)}:\n'
+        await ctx.send(header + body)
+        return

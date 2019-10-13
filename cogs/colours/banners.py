@@ -23,8 +23,10 @@ class HalloweenBanner(Pool):
     black_weight = 5  # SSR
     black = static_puddle(HsvPuddle, 0, 0, 0.01)
 
-    def __init__(self):
+    def __init__(self, name):
         super().__init__()
+
+        self.name = name
 
         for colour in ['orange', 'purple', 'black']:
             pud = getattr(self, colour)
@@ -39,7 +41,7 @@ def get_current_banner():
 
     if not BANNERS:
         BANNERS = {
-            'halloween': HalloweenBanner(),
+            'halloween': HalloweenBanner('Halloween!'),
         }
 
     selected = os.environ.get('COLOUR_BANNER')

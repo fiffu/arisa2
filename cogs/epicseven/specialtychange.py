@@ -9,4 +9,5 @@ SPEC_CHANGE = {
     'roozid': 'righteous thief roozid',
     'butcher corps inquisitor': 'chaos sect inquisitor',
     'church of ilryos axe': 'chaos sect axe',
+    'rikoris': 'captain rikoris',
 }

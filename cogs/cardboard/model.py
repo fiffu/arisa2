@@ -23,6 +23,11 @@ DAN_URL_STUB = config.DAN_URL_STUB
 client = CLIENT
 
 
+VETO = config.VETO
+FLOATS = config.FLOATS
+SINKS = config.SINKS
+DEVALUED_TAGS = set(config.DEVALUED_TAGS)
+
 @memoized
 def search(search_string):
     return client.post_list(tags=search_string, limit=POSTS_PER_QUERY)
@@ -31,9 +36,9 @@ def search(search_string):
 def process_tags(taglist) -> Tuple[List, List, List, List]:
     taglist = sorted(taglist, key=lambda t: len(t['name']))
 
-    veto = config.VETO
-    floats = config.FLOATS
-    sinks = config.SINKS
+    veto = VETO
+    floats = FLOATS
+    sinks = SINKS
 
     floated, regular, sunk, vetoed = [], [], [], []
     for tag in taglist:
@@ -107,6 +112,9 @@ async def select_posts(posts, num_to_return=1) -> List[Tuple[Post, Url]]:
 
     output = []
     for post in posts:
+        if DEVALUED_TAGS.intersection(set(post['tag_string'].split())):
+            continue
+
         imgurl = get_image_url(post)
         if imgurl:
             output.append((post, imgurl))

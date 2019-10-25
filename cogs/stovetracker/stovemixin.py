@@ -97,9 +97,10 @@ class StovePost(object):
         datestr = dateelem.find('time').attrs.get('datetime')
 
         dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
+        # Timezone on site is actually in UTC-4 (ET), but reported as UTC
+        # Add 4 hours to adjust back to UTC, then mark the timezone as UTC
+        dt += datetime.timedelta(hours=4)
         dt = dt.astimezone(datetime.timezone.utc)
-
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
 
         self._timestamp = dt
         return self._timestamp
@@ -242,5 +243,5 @@ class StoveMixin:
             resps.append(src)
 
         elapsed_secs = (datetime.datetime.now() - start).total_seconds()
-        log.info('Pulled %s pages (t=%ss)', len(urls), elapsed_secs)
+        # log.info('Pulled %s pages (t=%ss)', len(urls), elapsed_secs)
         return resps

@@ -26,7 +26,7 @@ client = CLIENT
 VETO = config.VETO
 FLOATS = config.FLOATS
 SINKS = config.SINKS
-DEVALUED_TAGS = set(config.DEVALUED_TAGS)
+EXCLUDE = set(config.EXCLUDE_POSTS_TAGGED_WITH)
 
 @memoized
 def search(search_string):
@@ -112,7 +112,7 @@ async def select_posts(posts, num_to_return=1) -> List[Tuple[Post, Url]]:
 
     output = []
     for post in posts:
-        if DEVALUED_TAGS.intersection(set(post['tag_string'].split())):
+        if EXCLUDE.intersection(set(post['tag_string'].split())):
             continue
 
         imgurl = get_image_url(post)

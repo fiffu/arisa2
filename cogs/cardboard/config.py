@@ -45,7 +45,7 @@ FLOATS = (
 )
 
 
-DEVALUED_TAGS = (
+EXCLUDE_POSTS_TAGGED_WITH = (
     'comic',
 )
 

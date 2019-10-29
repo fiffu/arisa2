@@ -1,5 +1,4 @@
 import datetime
-import re
 import logging
 from typing import Mapping, Sequence
 
@@ -24,6 +23,11 @@ class StovePost(object):
         self.forum_name = forum_name
         self.forum_url = forum_url
 
+        self._title = None
+        self._url = None
+        self._image_url = None
+        self._timestamp = None
+
 
     @property
     def articleid(self):
@@ -33,7 +37,7 @@ class StovePost(object):
 
     @property
     def title(self):
-        if hasattr(self, '_title'):
+        if self._title:
             return self._title
         div = self.soup.find('div', class_='table__td__subject__wrapper--text')
         self._title = div.text.strip()
@@ -42,7 +46,7 @@ class StovePost(object):
 
     @property
     def url(self):
-        if hasattr(self, '_url'):
+        if self._url:
             return self._url
         subject = self.soup.find('div', class_='table__td__subject')
         self._url = subject.find('a').attrs['href']
@@ -60,7 +64,7 @@ class StovePost(object):
         fork from the existing one) every time we need to grab a page, but
         we need ot check the memory overhead of doing that first.
         """
-        if hasattr(self, '_image_url'):
+        if self._image_url:
             return self._image_url
 
         if '[Event]' in self.title:
@@ -90,16 +94,26 @@ class StovePost(object):
 
     @property
     def timestamp(self) -> datetime.datetime:
-        if hasattr(self, '_timestamp'):
+        if self._timestamp:
             return self._timestamp
 
         dateelem = self.soup.find('td', class_='table__td td-date')
-        datestr = dateelem.find('time').attrs.get('datetime')
+        datestr = dateelem.find('span').text.strip()
 
-        dt = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M')
-        # Timezone on site is actually in UTC-4 (ET), but reported as UTC
-        # Add 4 hours to adjust back to UTC, then mark the timezone as UTC
-        dt += datetime.timedelta(hours=4)
+        time, offset = datestr.split(' (UTC')
+        dt = datetime.datetime.strptime(time, '%Y.%m.%d. %H:%M')
+
+        # Guess the offset as best as we can
+        while True:
+            offset = offset[:-1]
+            try:
+                offset = float(offset[:-1])
+                break
+            except ValueError:
+                offset = offset[:-1] or 0  # trim trailing chars or stop at 0
+
+        # Add in the offset, hopefully without anything horrible happening
+        dt += datetime.timedelta(hours=offset)
         dt = dt.astimezone(datetime.timezone.utc)
 
         self._timestamp = dt
@@ -153,14 +167,14 @@ class StoveMixin:
         pscog = self.pubsubcog
 
         if not pscog:
-            log.warning(f'PublishSubscribe not found, unable to publish '
-                        f'"{self.topic}" announces to channels')
+            log.warning('PublishSubscribe not found, unable to publish '
+                        '"%s" announces to channels', self.topic)
             return
 
         channelids = await pscog.get_channelids_by_topic(topic)
         if not channelids:
-            log.info(f'New updates received on topic "{self.topic}", but no '
-                     f'subscribers to be notified.')
+            log.info('New updates received on topic "%s", but no subscribers '
+                     'to be notified.', self.topic)
             return
 
         posts = sorted(new_posts, key=lambda p: p.timestamp)
@@ -168,7 +182,7 @@ class StoveMixin:
             return
 
         s = 's' if len(posts) != 1 else ''
-        log.info(f'{len(posts)} new posts for topic "{topic}"')
+        log.info('%s new posts for topic "%s"', len(posts), topic)
 
         sendargs = [
             dict(content=None, embed=post.to_embed(self.topic))
@@ -205,7 +219,8 @@ class StoveMixin:
                 except NameError:
                     pass
                 cls = e.__class__.__name__
-                log.error('Failed to parse page{url} ({cls}: {e})')
+                log.error('Failed to parse page%s (%s: %s)',
+                          url, cls, e)
 
         if posts:
             new_posts = self.filtered(posts)
@@ -227,7 +242,10 @@ class StoveMixin:
 
             time_delta = post.time_since_posted
             time_delta_secs = time_delta.total_seconds()
-            if time_delta_secs < cutoff_secs:
+
+            # If delta is negative, the timestamp is in the future, so assume
+            # that parsing has probably broken and ignore the post
+            if 0 < time_delta_secs < cutoff_secs:
                 new_posts.append(post)
         return new_posts
 

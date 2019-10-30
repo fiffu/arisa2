@@ -105,17 +105,15 @@ class StovePost(object):
 
         # Guess the offset as best as we can
         while True:
-            offset = offset[:-1]
             try:
-                offset = float(offset[:-1])
+                offset = float(offset)
                 break
             except ValueError:
                 offset = offset[:-1] or 0  # trim trailing chars or stop at 0
 
         # Add in the offset, hopefully without anything horrible happening
-        dt += datetime.timedelta(hours=offset)
-        dt = dt.astimezone(datetime.timezone.utc)
-
+        dt -= datetime.timedelta(hours=offset)
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
         self._timestamp = dt
         return self._timestamp
 
@@ -246,6 +244,7 @@ class StoveMixin:
             # If delta is negative, the timestamp is in the future, so assume
             # that parsing has probably broken and ignore the post
             if 0 < time_delta_secs < cutoff_secs:
+                log.info('%s', post.title[:30]+'...')
                 new_posts.append(post)
         return new_posts
 

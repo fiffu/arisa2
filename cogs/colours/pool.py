@@ -119,7 +119,7 @@ class RgbPuddle(Puddle):
 
 
 
-def static_puddle(cls_pool, component1, component2, component3):
+def monochrome_puddle(cls_pool, component1, component2, component3):
     return cls_pool('uniform', component1, component1,
                     'uniform', component2, component2,
                     'uniform', component3, component3)

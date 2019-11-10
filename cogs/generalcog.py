@@ -15,6 +15,7 @@ DEFAULT_ROLL_MODIFIER = -1
 
 GITHUB_LINK = 'https://github.com/fiffu/arisa2'
 
+BIRB = '<:birb:636038394945863691>'
 
 class General(commands.Cog):
     """
@@ -28,8 +29,9 @@ class General(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         log.info('--------------------------------------------------------')
-        log.info(f'Logged in as {self.bot.user.name}.')
-        log.info(f'  https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=0\n')
+        log.info('Logged in as %s.', self.bot.user.name)
+        log.info('  https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot&permissions=0\n',
+                 self.bot.user.id)
 
 
     @commands.command()
@@ -57,6 +59,10 @@ class General(commands.Cog):
         match = None
         if args:
             args = ' '.join(args)
+            if len(args) > 30:
+                await ctx.send(f"That's just way too much work {BIRB}")
+                return
+
             match = re.match(repatt, args)
             if match:
                 grps = [x or 0 for x in match.groups()]
@@ -78,12 +84,12 @@ class General(commands.Cog):
                                   DEFAULT_ROLL_MODIFIER):
             formatted = '0-99'
 
-        msg = f"Rolling {formatted}: **{res}**"
+        emb = Embed(description=f"Rolling {formatted}: **{res}**")
 
         if args and not match:
-            msg += '\nTip: `!roll`, `!roll 2`, `!roll d12`, `!roll 3d5+7`'
+            emb.set_footer('Syntax: !roll, !roll 2, !roll d12, !roll 3d5+7')
 
-        await ctx.send(content=msg)
+        await ctx.send(embed=emb)
 
 
     @commands.command('8ball')

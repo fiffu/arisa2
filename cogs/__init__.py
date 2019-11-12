@@ -2,33 +2,45 @@ import logging
 
 from appconfig import DEBUGGING
 
+# Debugging
 from .debugcog import DebugCog
-from .generalcog import General
 
+# Custom tricks and tools
 from .cardboard.cog import DanbooruSearch
 from .colours.cog import Colours
+from .generalcog import General
+from .interceptor.cog import Interceptor
+
+# Game-specific
 from .epicseven.cog import EpicSeven
 from .kingsraid.cog import KrSearch
 
-from .publishsubscribecog import PublishSubscribe
+# Automated site tracking service
 from .plugtracker.kingsraidcog import PlugKingsRaid
 from .plugtracker.browndustcog import PlugBrownDust
+from .publishsubscribecog import PublishSubscribe
 from .stovetracker.epicsevencog import StoveEpicSeven
 from .tracking.twitchcog import TwitchMogra
 
 
+
 log = logging.getLogger(__name__)
+
 
 ENABLED_COGS = [
     DebugCog,
-    General,
-    Colours,
-    KrSearch,
-    EpicSeven,
+
     DanbooruSearch,
-    PublishSubscribe,
+    Colours,
+    General,
+    Interceptor,
+
+    EpicSeven,
+    KrSearch,
+
     PlugKingsRaid,
     PlugBrownDust,
+    PublishSubscribe,
     StoveEpicSeven,
     TwitchMogra,
 ]

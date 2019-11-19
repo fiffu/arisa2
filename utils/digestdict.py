@@ -1,3 +1,37 @@
+# Bind to module scope
+abs_, len_, min_, max_ = abs, len, min, max
+
+def lev(a, b, tolerance=2, sentinel=1000):
+    i, j = len_(a), len_(b)
+
+    # Upper bound is length diff, quit if length difference is too big
+    if abs_(i - j) > tolerance:
+        return sentinel
+
+    # Quit early if we know the minimum number of substitutions to make will
+    # already be too big
+    diff = len_({*a}.symmetric_difference({*b})) // 2
+    if diff > tolerance:
+        return sentinel
+
+    # Special case where one of the strings is length 0
+    if not (i * j):
+        return max_(i, j)
+
+    A, B = a[:-1], b[:-1]
+    return min_(
+        lev(A, b) + 1,
+        lev(a, B) + 1,
+        lev(A, B) + (a[-1] != b[-1])
+    )
+
+
+def autocorrect(query, candidates, tolerance=2):
+    cands = [(lev(query, c, tolerance), c) for c in candidates]
+    return [cand for n, cand in sorted(cands) if n <= tolerance]
+
+
+
 class DigestDict:
     """A dictionary-like class that can be indexed using "digested" keys
 
@@ -105,13 +139,18 @@ class DigestDict:
             cand = self.candidates(key, limit=1)
             if not cand:
                 return default
-            return self.fetch(cand[0], default, autocomplete)
+            cand = cand[0]
+            return (
+                self._dic.get(cand)
+                or self._dic.get(self._digested[cand])
+                or default
+            )
 
         else:
             return default
 
 
-    def candidates(self, partialkey, limit=None):
+    def candidates(self, partialkey, limit=10):
         """Returns a list of autocomplete candidates for a given key"""
         def search(items, results, limit):
             keys = [k for k, v in sorted(items, key=lambda x: len(x[0]))]
@@ -123,7 +162,15 @@ class DigestDict:
 
         out = []
         search(self._dic.items(), out, limit)
-        search(self.digesteditems(), out, limit)
+
+        dig_items = list(self.digesteditems())
+        search(dig_items, out, limit)
+
+        if len(out) < limit:
+            keys = [k for k, v in dig_items] + list(self._dic.keys())
+            cands = autocorrect(partialkey, keys)
+            out.extend(cands)
+            out = out[:limit]
 
         return out
 
@@ -132,6 +179,7 @@ class DigestDict:
         return [dig
                 for dig, actual in self._digested.items()
                 if actual == key]
+
 
     """
     Removing items

@@ -1,6 +1,7 @@
 from functools import partial
 import logging
 
+from discord import Embed
 from discord.ext import commands
 
 from .model import BadConstraintError, calculator
@@ -81,7 +82,7 @@ class EpicSeven(commands.Cog):
         msglen = 0
 
         conditions = [interpret_whitelist(w) for w in whitelists]
-        header = '> Highest morale yield matching conditions: '
+        header = 'Highest morale yield matching conditions: '
         header += f'**{" / ".join(conditions)}**\n'
         msglen += len(header)
 
@@ -89,14 +90,14 @@ class EpicSeven(commands.Cog):
         for (team, first, second) in choices:
             teamstr = ', '.join(digest(name.title(), dot=' ') for name in team)
             total = first[0] + second[0]
-            line = f'> +{total:<2}: {teamstr}\n'
+            line = f'**+{total:<2}**: {teamstr}\n'
             msglen += len(line)
             if msglen > msg_len_cap:
                 break
             lines.append(line)
 
-        msg = ''.join([header, *lines])
-        await ctx.send(msg)
+        embed = Embed(description=''.join([header, *lines]))
+        await ctx.send(embed=embed)
 
 
     @commands.command(
@@ -145,14 +146,16 @@ class EpicSeven(commands.Cog):
 
         team, first, second = choices[0]
         total = first[0] + second[0]
-        lines = [f'> **{total:>2}** morale:']
+        lines = [f'**{total:>2}** morale:']
         for chat in [first, second]:
             gain, name, topic = chat
             topic = ' '.join(topic.split('-')).title()
-            lines.append(f'> {gain:>2} from {name.title()} - {topic}')
+            lines.append(f'{gain:>2} from {name.title()} - {topic}')
         body = '\n'.join(lines)
 
         team = [f'**{t.title()}**' for t in team]
-        header = f'> Camping with {conjunctify(team, oxford=False)}:\n'
-        await ctx.send(header + body)
+        header = f'Camping with {conjunctify(team, oxford=False)}\n'
+
+        embed = Embed(description=header + body)
+        await ctx.send(embed=embed)
         return

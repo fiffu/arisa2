@@ -227,8 +227,7 @@ def generate_teams(*whitelists, maxteamsize=4):
 
     See also: flag_to_whitelist().
     """
-    heroes = HEROES.copy()
-    names = [list(filter_dict(heroes, wlist).keys())
+    names = [list(filter_dict(HEROES, wlist).keys())
              for wlist in whitelists]
 
     for team in pools_to_teams(names, combisize=maxteamsize):
@@ -257,18 +256,16 @@ def query_to_pool(*args):
 
 
 def calculator(*heronames, maxteams=50):
-    def total_morale(firstchat, secondchat):
-        return firstchat[0] + secondchat[0]
-
     choices = []
     max_gain = 0
     teams, whitelists = query_to_pool(*heronames)
     for team in teams:
+        if len(choices) >= maxteams:
+            break
         first, second = calculate_morale(*team)
-        gain = total_morale(first, second)
+        gain = first[0] + second[0]
         if gain >= max_gain:
-            # Insert team as first option and truncate results to maxteams
-            choices = [(team, first, second), *choices][:maxteams]
+            choices.insert(0, (team, first, second))
             max_gain = gain
 
     return choices, whitelists

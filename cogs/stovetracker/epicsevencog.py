@@ -9,6 +9,8 @@ TOPIC = 'e7stove'
 URLS = {
     'General News':
         'https://page.onstove.com/epicseven/global/board/list/e7en001?listType=2&direction=latest&display_opt=usertag_on,html_remove',
+    'Game Maintenance':
+        'https://page.onstove.com/epicseven/global/board/list/e7en002?listType=2&direction=latest&display_opt=usertag_on,html_remove',
 }
 
 

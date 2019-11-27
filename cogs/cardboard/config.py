@@ -18,6 +18,8 @@ ALIASES = {
         ['dookie', 'duki']
     ,"annette_(king's_raid)":
         ['annette']
+    ,'clarisse_(granblue_fantasy)':
+        ['dokkan']
 }
 
 

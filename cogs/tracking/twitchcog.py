@@ -75,9 +75,11 @@ class Stream:
         else:
             emb.set_author(name=self.user_name)
 
-        jst = self.started_at + timedelta(hours=9)
-        emb.description = ("Today's event schedules: https://club-mogra.jp/" +
-                           jst.strftime('%Y/%m/%d'))
+        if user_name.upper() == 'MOGRA':
+            jst = self.started_at + timedelta(hours=9)
+            desc = ("Today's event schedules: https://club-mogra.jp/" +
+                    jst.strftime('%Y/%m/%d'))
+            emb.description = desc
 
         emb.colour = Colour(0xEE4488)  # Magenta
 

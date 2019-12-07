@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from typing import List
 
-from discord import Embed
+from discord import Colour, Embed
 
 import appconfig
 from .trackercog import TrackerCog
@@ -36,8 +36,9 @@ CACHED = dict()
 
 
 class Stream:
+    """Abstraction over Twitch stream object state"""
     def __init__(self, **kwargs):
-        # Initializing attribs like this will destroy your pylint score
+        # Tip: Initializing attribs like this will destroy your pylint score
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -74,7 +75,13 @@ class Stream:
         else:
             emb.set_author(name=self.user_name)
 
-        emb.set_thumbnail(url=self.get_thumbnail(568, 360))
+        jst = self.started_at + timedelta(hours=9)
+        emb.description = ("Today's event schedules: https://club-mogra.jp/" +
+                           jst.strftime('%Y/%m/%d'))
+
+        emb.colour = Colour(0xEE4488)  # Magenta
+
+        emb.set_thumbnail(url=self.get_thumbnail(width=568, height=360))
         emb.set_footer(text=f'To stop receiving updates from this topic, '
                             f'type !untrack {topic}')
         return emb

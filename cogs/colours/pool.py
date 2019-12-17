@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from colorsys import rgb_to_hsv
 import random
 
 
@@ -117,6 +118,10 @@ class RgbPuddle(Puddle):
         self.add_component('g', 'clamp', g_dist, g_param1, g_param2)
         self.add_component('b', 'clamp', b_dist, b_param1, b_param2)
 
+    def dip(self):
+        r, g, b = super().dip()
+        h, s, v = rgb_to_hsv(r, g, b)
+        return (h, s, v)
 
 
 def monochrome_puddle(cls_pool, component1, component2, component3):

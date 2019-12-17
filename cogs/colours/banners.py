@@ -78,12 +78,63 @@ class HalloweenBanner(Pool):
                 self.add_puddle(pud, weight)
 
 
+class ChristmasBanner(Pool):
+    """Christmas banner"""
+
+    # Name of banner as displayed to users
+    name = 'Christmas!'
+
+    puddles = {
+        'silver': {
+            'weight': 10,
+            'puddle': RgbPuddle('gaussian', 207/255, 7/255,
+                                'gaussian', 207/255, 7/255,
+                                'gaussian', 207/255, 7/255),
+        },
+        'pale gold': {
+            'weight': 10,
+            'puddle': RgbPuddle('uniform', 207/255, 207/255,
+                                'uniform', 207/255, 207/255,
+                                'uniform', 130/255, 150/255),
+        },
+        'midnight blue': {
+            'weight': 10,
+            'puddle': RgbPuddle('uniform',  0/255,  0/255,
+                                'uniform', 30/255, 30/255,
+                                'uniform', 62/255, 62/255),
+        },
+        'dark red': {
+            'weight': 35,
+            'puddle': RgbPuddle('uniform', 169/255, 189/255,
+                                'uniform',  40/255,  40/255,
+                                'uniform',  40/255,  40/255),
+        },
+        'emerald': {
+            'weight': 35,
+            'puddle': RgbPuddle('uniform', 255/255, 255/255,
+                                'uniform',  36/255,  36/255,
+                                'uniform',   0/255,   0/255),
+        }
+    }
+
+    def __init__(self):
+        super().__init__()
+
+        for puddleinfo in self.puddles.values():
+            pud = puddleinfo.get('puddle')
+            weight = puddleinfo.get('weight')
+
+            if pud and weight:
+                self.add_puddle(pud, weight)
+
+
 
 def get_current_banner():
     AVAILABLE_BANNERS = {
         # key: identifier in environment vars to enable banner
         # value: banner object
         'halloween': HalloweenBanner(),
+        'christmas': ChristmasBanner(),
     }
 
     selected = os.environ.get('COLOUR_BANNER')
@@ -95,10 +146,10 @@ def get_current_banner():
         return None
 
     not_hsv = lambda x: not isinstance(x, HsvPuddle)
-    if any(map(not_hsv, banner.puddles)):
-        msg = ('failed to load banner "%s" as only HsvPuddles are supported '
-               'at the moment')
-        log.error(msg, selected)
-        return None
+    # if any(map(not_hsv, banner.puddles)):
+    #     msg = ('failed to load banner "%s" as only HsvPuddles are supported '
+    #            'at the moment')
+    #     log.error(msg, selected)
+    #     return None
 
     return banner

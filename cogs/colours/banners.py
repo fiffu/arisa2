@@ -111,9 +111,9 @@ class ChristmasBanner(Pool):
         },
         'emerald': {
             'weight': 35,
-            'puddle': RgbPuddle('uniform', 255/255, 255/255,
-                                'uniform',  36/255,  36/255,
-                                'uniform',   0/255,   0/255),
+            'puddle': RgbPuddle('uniform',  40/255,  40/255,
+                                'uniform', 120/255, 130/255,
+                                'uniform',  40/255,  40/255),
         }
     }
 

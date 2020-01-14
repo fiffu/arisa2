@@ -99,7 +99,7 @@ class StovePost(object):
         datestr = dateelem.text.strip()
 
         time, offset = datestr.split(' (UTC')
-        dt = datetime.datetime.strptime(time, '%Y.%m.%d. %H:%M')
+        dt = datetime.datetime.strptime(time, '%Y.%m.%d %H:%M')
 
         # Guess the offset as best as we can
         while True:

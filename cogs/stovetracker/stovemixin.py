@@ -39,7 +39,7 @@ class StovePost(object):
     def title(self):
         if self._title:
             return self._title
-        div = self.soup.find('div', class_='table__td__subject__wrapper--text')
+        div = self.soup.find('div', class_='subject-txt')
         self._title = div.text.strip()
         return self._title
 
@@ -48,8 +48,7 @@ class StovePost(object):
     def url(self):
         if self._url:
             return self._url
-        subject = self.soup.find('div', class_='table__td__subject')
-        self._url = subject.find('a').attrs['href']
+        self._url = self.soup.find('a').attrs['href']
         return self._url
 
 
@@ -77,18 +76,17 @@ class StovePost(object):
 
     @property
     def author(self):
-        user = self.soup.find('td', class_='table__td td-user').find('a')
+        user = self.soup.find('div', class_='module-profile')
 
-        url = user.attrs.get('href')
-
-        # Monkey patch to fix weird Stove url
-        if url.startswith('//www'):
-            url = 'https:' + url
+        # url = user.attrs.get('href')
+        # # Monkey patch to fix weird Stove url
+        # if url.startswith('//www'):
+        #     url = 'https:' + url
 
         return {
-            'name': user.text.strip(),
-            'url': url,
-            'icon_url': user.find('img').attrs.get('src'),
+            'name': user.find('span', class_='profile-name').text.strip(),
+            # 'url': url,
+            'icon_url': 'https:' + user.find('img').attrs.get('src'),
         }
 
 
@@ -97,8 +95,8 @@ class StovePost(object):
         if self._timestamp:
             return self._timestamp
 
-        dateelem = self.soup.find('td', class_='table__td td-date')
-        datestr = dateelem.find('span').text.strip()
+        dateelem = self.soup.find('span', class_='write-time-tooltip')
+        datestr = dateelem.text.strip()
 
         time, offset = datestr.split(' (UTC')
         dt = datetime.datetime.strptime(time, '%Y.%m.%d. %H:%M')
@@ -199,11 +197,11 @@ class StoveMixin:
             try:
                 soup = BeautifulSoup(page, 'html.parser')
 
-                forum_name = soup.find('h3', class_='page--content__title').text
+                forum_name = soup.find('h3', class_='header-tit').text.strip()
                 forum_url = self.stove_forum_name_urls.get(forum_name)
 
-                container = soup.find('div', class_='page--board')
-                elems = container.find_all('tr', class_='checkbox')
+                container = soup.find('ul', class_='module-list')
+                elems = container.find_all('li', class_='list-item')
 
                 # log.info(f'Forum: {forum_name} - {len(post_divs)} posts')
 

@@ -363,16 +363,6 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
 
-        if role.name.lower() == 'tannu#2037':
-            # Using rolename rather than username is more "tamper-resistant"
-            # since users can't change or remove their colour roles (for now)
-            if set_to:
-                embed = None
-            else:
-                # emoji = choice([VAMPY, BIRB])
-                # await ctx.send(emoji)
-                return
-
         log.info('Set %sfreeze on %s', un, str(member))
         await self.update_frozen(member.id, set_to)
 

@@ -182,9 +182,8 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                 tstamp = ts
             emoji_ctr[row['emojistr']] += 1
 
-        # Get total count and cast to regular dict before dumping to db
+        # Get total count
         total_count = sum(emoji_ctr.values())
-        emoji_ctr = dict(emoji_ctr)
 
         query = """
             INSERT INTO emojistats_archive (tstamp, emoji_json, total_count)

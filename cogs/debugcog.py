@@ -41,17 +41,18 @@ class DebugCog(commands.Cog):
             tb = traceback.format_exc()
             log.error(f'%s: %s', cls, tb)
 
-            if DEBUGGING:
-                msg = f'{cls}: {msg}```\n{tb}```'
-                await ctx.send(content=msg)
-
-        # finally:
             if not DEBUGGING:
                 return
-            if not self.halting:
+
+            msg = f'{cls}: {msg}```\n{tb}```'
+            await ctx.send(content=msg)
+
+            if self.halting:
+                await ctx.send(content='App halting.')
+            else:
                 await ctx.send(content='App skipped halting.')
                 return
-            await ctx.send(content='App halting.')
+
             log.critical(f'Halting due to command error...')
             await self.bot.close()
 
@@ -72,6 +73,14 @@ class DebugCog(commands.Cog):
     @commands.command(hidden=True)
     async def halt(self, ctx):
         await self.sethalt(True)
+
+
+    @commands.command(hidden=True)
+    async def echo(self, ctx):
+        m = ctx.message
+        await ctx.send(m)
+        await ctx.send(m.content)
+        await ctx.send(f'```{m.content}```')
 
 
     @commands.command(hidden=True)

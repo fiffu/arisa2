@@ -4,6 +4,7 @@ import logging
 import urllib.parse as urllib_parse
 
 from discord import Embed
+from discord.utils import escape_markdown
 
 from .config import DAN_COLOUR, DAN_URL_STUB, DAN_SEARCH_STUB
 
@@ -11,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def make_post_title(post):
-    artist_str = post.get('tag_string_artist', None)
+    artist_str = escape_markdown(post.get('tag_string_artist', ''))
     artist = ''
     if artist_str:
       artists = post['tag_string_artist'].replace(' ', ', ')
@@ -23,6 +24,7 @@ def make_post_title(post):
     include_chars = []
     unadded = len(characters)
     for char in characters:
+        char = escape_markdown(char)
         if (curr_len + len(' and 999 others')) > 256:
             include_chars.pop()
             s = 's' if unadded > 1 else ''

@@ -127,31 +127,6 @@ class PlugMixin:
         raise NotImplementedError
 
 
-    @property
-    def topic(self) -> str:
-        """Mapping[forumName, forumUrl]"""
-        raise NotImplementedError
-
-
-    @property
-    def pubsubcog(self):
-        pscog = self.bot.get_cog('PublishSubscribe')
-        if not pscog:
-            mycls = self.__class__.__name__
-            log.warning('PublishSubscribe not found, please ensure that '
-                        f'it is loaded before {mycls} in cogs.__init__')
-        return pscog
-
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        if self.pubsubcog:
-            self.pubsubcog.register_cog_to_topic(self.topic, self)
-        else:
-            log.warning(f'PublishSubscribe not found, failed to register '
-                        f'topic "{self.topic}"')
-
-
     async def handle_new_posts(self, new_posts: Sequence[PlugPost]) -> None:
         topic = self.topic
         pscog = self.pubsubcog
@@ -230,4 +205,3 @@ class PlugMixin:
             resps.append(await response.text())
 
         return resps
-

@@ -1,6 +1,7 @@
 MUTATE_COOLDOWN_TIME = dict(hours=4)
 REROLL_COOLDOWN_TIME = dict(hours=12)
 REROLL_PENALTY_TIME = dict(minutes=30)
+
 # MUTATE_COOLDOWN_TIME = dict(seconds=1)
 # REROLL_COOLDOWN_TIME = dict(seconds=5)
 # REROLL_PENALTY_TIME = dict(seconds=1)

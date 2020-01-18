@@ -98,7 +98,7 @@ def make_mutated_color(colobj: discord.Colour):
     return discord.Colour.from_rgb(*newrgb)
 
 
-def make_colour_embed(r, g, b, title=None, desc=None):
+def make_colour_embed(r, g, b, title=None, desc=None, banner=None):
     hexa = helpers.to_hexcode(r, g, b)
     title = title or f'#{hexa} · rgb({r}, {g}, {b})'
 
@@ -108,9 +108,12 @@ def make_colour_embed(r, g, b, title=None, desc=None):
                            for c in colinfo)
         desc = f'\n_{names}_'
 
-    return discord.Embed(title=title,
-                         colour=discord.Colour.from_rgb(r, g, b),
-                         description=desc)
+    emb = discord.Embed(title=title,
+                        colour=discord.Colour.from_rgb(r, g, b),
+                        description=desc)
+    if banner:
+        emb.set_footer(text='Current banner: ' + banner)
+    return emb
 
 
 async def assign_new_colour(member, action, retry=True):
@@ -333,7 +336,9 @@ class Colours(DatabaseCogMixin, commands.Cog):
             await ctx.send(content=msg)
             return
 
-        embed = make_colour_embed(*newcol.to_rgb())
+        banner = get_current_banner()
+        bname = banner.name if banner else None
+        embed = make_colour_embed(*newcol.to_rgb(), banner=bname)
         now = datetime.utcnow()
         await self.update_last('mutate', member.id, now)
         await self.update_last('reroll', member.id, now)
@@ -359,16 +364,6 @@ class Colours(DatabaseCogMixin, commands.Cog):
             return
 
         embed = make_colour_embed(*role.colour.to_rgb()) if set_to else None
-
-        if role.name.lower() == 'tannu#2037':
-            # Using rolename rather than username is more "tamper-resistant"
-            # since users can't change or remove their colour roles (for now)
-            if set_to:
-                embed = None
-            else:
-                # emoji = choice([VAMPY, BIRB])
-                # await ctx.send(emoji)
-                return
 
         log.info('Set %sfreeze on %s', un, str(member))
         await self.update_frozen(member.id, set_to)
@@ -441,11 +436,17 @@ class Colours(DatabaseCogMixin, commands.Cog):
         frozen = await self.get_is_frozen(member.id)
         desclines.extend([' _(currently frozen)_' if frozen else ''])
 
-
+        protip = ''
         if ctx.message.content.startswith(ctx.prefix + 'colinfo'):
-            protip = 'Protip: you can use !ci as a shortcut for this command.'
+            protip += 'Protip: you can use !ci as a shortcut for this command. '
             # desclines.extend(
             #     ['\n', f'`{protip}`'])
+
+        banner = get_current_banner()
+        if banner:
+            protip += f'Ongoing banner: {banner.name}'
+
+        if protip:
             embed.set_footer(text=protip)
 
         embed.description = ''.join(desclines)

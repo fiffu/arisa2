@@ -52,3 +52,10 @@ SECRET=
 # mainly the ability to search up to six tags at once and see censored posts.
 USER=
 API_KEY=
+
+
+[TWITCH]
+# This is simply the Client-ID header arg supplied to calls to the Twitch API.
+# You can create an Developer Application and obtain its Client-ID from here:
+# https://dev.twitch.tv/console/apps
+CLIENT_ID=

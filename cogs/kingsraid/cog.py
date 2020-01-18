@@ -306,6 +306,7 @@ class KrSearch(commands.Cog):
         if not (embed.title and entity):
             return
 
+        new = None
         for page, emoji in PAGES_EMOJI.items():
             if emoji == reaction.emoji:
                 new = create_embed(entity, page)

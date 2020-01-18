@@ -18,6 +18,8 @@ ALIASES = {
         ['dookie', 'duki']
     ,"annette_(king's_raid)":
         ['annette']
+    ,'clarisse_(granblue_fantasy)':
+        ['dokkan']
 }
 
 
@@ -45,7 +47,7 @@ FLOATS = (
 )
 
 
-DEVALUED_TAGS = (
+EXCLUDE_POSTS_TAGGED_WITH = (
     'comic',
 )
 

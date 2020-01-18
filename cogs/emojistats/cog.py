@@ -237,10 +237,3 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         embed = embed_from_emoji_tups(emoji_found_tups)
         await ctx.send(embed=embed)
 
-
-    @commands.command(hidden=True)
-    async def echo(self, ctx):
-        _, msg = ctx.message.content.split(' ', 1)
-        # This will escape emojis and Markdown
-        msg = re.sub(r'([\\\<\>\:`_\*\~\|])', r'\\\1', msg)
-        await ctx.send(content=msg)

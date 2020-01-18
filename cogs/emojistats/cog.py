@@ -175,7 +175,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         emoji_ctr = Counter()
 
         # Push row data into counter object
-        async for row in self.db_query(query):
+        for row in await self.db_query(query):
             ts = row['tstamp']
             # Use latest tstamp in batch as the tstamp for archive row
             if (not tstamp) or (ts > tstamp):

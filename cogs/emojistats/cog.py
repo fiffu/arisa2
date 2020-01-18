@@ -17,11 +17,11 @@ log = logging.getLogger(__name__)
 ROW_COUNT_HARD_CAP = 5000
 ROW_COUNT_SOFT_CAP = 1000
 
-EMOJI_STRING_PATTERN = r'\<\:(?P<name>.+)\:(?P<uid>\d+)\>'
+EMOJI_STRING_PATTERN = re.compile(r'\<\:(?P<name>.+)\:(?P<uid>\d+)\>')
 
 
 def find_emoji(str_content):
-    for name, uid in set(re.findall(EMOJI_STRING_PATTERN, str_content)):
+    for name, uid in set(EMOJI_STRING_PATTERN.findall(str_content)):
         raw = f'<:{name}:{uid}>'
         yield raw, name, uid
 
@@ -42,13 +42,13 @@ def embed_from_emoji_tups(emoji_tup_list):
     else:
         uid = emoji_tup_list[0][1]
         url = f'https://cdn.discordapp.com/emojis/{uid}.png'
-        embed.set_image(url)
+        embed.set_image(url=url)
 
     return embed
 
 
 def cleave_emoji(emoji_str):
-    matched = re.match(EMOJI_STRING_PATTERN)
+    matched = EMOJI_STRING_PATTERN.match(emoji_str)
     if not matched:
         return (None, None)
     name, uid = matched.groups()

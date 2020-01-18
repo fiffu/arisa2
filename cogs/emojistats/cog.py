@@ -81,9 +81,9 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         await self.on_reaction_change(reaction, user, removing=False)
 
 
-    @commands.Cog.listener()
-    async def on_reaction_remove(self, reaction, user):
-        await self.on_reaction_change(reaction, user, removing=True)
+    # @commands.Cog.listener()
+    # async def on_reaction_remove(self, reaction, user):
+    #     await self.on_reaction_change(reaction, user, removing=True)
 
 
     async def on_reaction_change(self, reaction, user, removing):
@@ -91,9 +91,6 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             return
 
         emoji = reaction.emoji
-
-        if not emoji.available:
-            return
 
         emoji_str = str(emoji)
         userid = user.id
@@ -151,8 +148,12 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         await self.trim_rows()
 
 
-    async def trim_rows(self):
-        if self.rows_count < ROW_COUNT_HARD_CAP:
+    async def trim_rows(self, force=False):
+        if (not force) and (self.rows_count < ROW_COUNT_HARD_CAP):
+            return
+
+        if self.rows_count == 0:
+            log.info('No rows to trim')
             return
 
         # Ordered by newest to oldest rows, excluding SOFT_CAP newest rows
@@ -194,6 +195,11 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                               [tstamp, Json(emoji_ctr), total_count])
         log.info('Trimmed emojistats into archive, tstamp=%s',
                  tstamp.timestamp())
+
+
+    @commands.command(hidden=True)
+    async def trim(self, *args, **kwargs):
+        await self.trim_rows(force=True)
 
 
     @commands.command()

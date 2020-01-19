@@ -1,3 +1,5 @@
+from functools import partial
+from inspect import iscoroutinefunction
 import logging
 
 from discord.ext import commands
@@ -18,6 +20,10 @@ class DatabaseCogMixin:
     the app database, as well as to automatically setup and teardown the
     connection pool when the cog is loaded/unloaded.
     """
+    def __init__(self):
+        self._after_setup_pool = []
+
+
     @property
     def db_pool(self):
         return get_pool()
@@ -26,10 +32,24 @@ class DatabaseCogMixin:
     @commands.Cog.listener()
     async def on_ready(self):
         await setup_pool()
+        if self._after_setup_pool:
+            for awaitable in self._after_setup_pool:
+                await awaitable()
 
 
     def cog_unload(self):
+        """cog_unload is an interface specified by discordpy API"""
         close_pool()
+
+
+    def after_setup_pool(self, corofunc):
+        """Registers functions to run after database connections are setup"""
+        if not iscoroutinefunction(corofunc):
+            raise ValueError(f'argument "corofunc" must be a coroutine '
+                             f'function (defined with `async def`, or any '
+                             f'callable returning an awaitable object), not '
+                             f'{type(corofunc)}')
+        self._after_setup_pool.append(corofunc)
 
 
     async def db_execute(self, *args, **kwargs):
@@ -60,6 +80,24 @@ class DatabaseCogMixin:
                     # No results
                     pass
         return rows
+
+
+    async def db_query_generating(self, *args, **kwargs):
+        """Similar to db_query(), but yields rows instead of returning list
+
+        FIXME: TypeError: 'async for' requires an object with __aiter__ method, 
+               got coroutine
+        """
+        raise NotImplementedError
+        # async with self.db_pool.acquire() as conn:
+        #     async with conn.cursor(cursor_factory=DictCursor) as cur:
+        #         await cur.execute(*args, **kwargs)
+        #         try:
+        #             async for row in cur:
+        #                 return row  # return doesn't terminate, just yields
+        #         except psycopg2.ProgrammingError:
+        #             # No results
+        #             pass
 
 # class SomeCog(DatabaseCogMixin, commands.Cog):
 #     @commands.Cog.listener()

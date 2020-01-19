@@ -221,8 +221,10 @@ def cooldown_remaining(last_use_tstamp, **cooldown_timedelta_kwargs):
     return hms
 
 
+
 class Colours(DatabaseCogMixin, commands.Cog):
     def __init__(self, bot):
+        super().__init__()
         self.bot = bot
 
 

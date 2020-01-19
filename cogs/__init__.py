@@ -4,6 +4,8 @@ from appconfig import DEBUGGING
 
 # Debugging
 from .debugcog import DebugCog
+from .generalcog import General
+from .emojistats.cog import EmojiTools
 
 # Custom tricks and tools
 from .cardboard.cog import DanbooruSearch
@@ -32,6 +34,7 @@ ENABLED_COGS = [
 
     DanbooruSearch,
     Colours,
+    EmojiTools,
     General,
     Interceptor,
 

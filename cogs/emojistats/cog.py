@@ -1,5 +1,6 @@
 from collections import Counter, OrderedDict
 from datetime import datetime
+from itertools import chain
 import logging
 import re
 
@@ -32,10 +33,11 @@ def embed_from_emoji_tups(emoji_tup_list):
 
     embed = Embed()
 
-    for name, uid in emoji_tup_list:
-        wrapped = f':{name}:'
+    for raw, name, uid in emoji_tup_list:
         url = f'https://cdn.discordapp.com/emojis/{uid}.png'
-        embed.add_field(name=wrapped, value=url, inline=True)
+        fieldname = f'`:{name}:`'
+        fieldvalue = f'{raw} [link]({url})'
+        embed.add_field(name=fieldname, value=fieldvalue, inline=True)
 
     if not emoji_tup_list:
         embed.description = "_(Couldn't detect any custom emoji)_"
@@ -196,17 +198,11 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                  tstamp.timestamp())
 
 
-    @commands.command(hidden=True)
-    async def trim(self, *args, **kwargs):
-        await self.trim_rows(force=True)
-
-
     @commands.command()
     async def picfor(self, ctx, *args):
         """Provides the link to the picture of a given (custom) emoji"""
         args = ' '.join(args)
-        emoji_tuples = [(name, uid) for _, name, uid in find_emoji(args)]
-        embed = embed_from_emoji_tups(emoji_tuples)
+        embed = embed_from_emoji_tups(find_emoji(args))
         await ctx.send(embed=embed)
 
 
@@ -232,8 +228,8 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             text = message.content + (
                 ' '.join(str(r) for r in message.reactions))
 
-            for _, name, uid in find_emoji(text):
-                key = (name, uid)
+            for raw, name, uid in find_emoji(text):
+                key = (raw, name, uid)
                 if (uid not in local_emojis) and (key not in emoji_found_tups):
                     emoji_found_tups[key] = None
 
@@ -242,3 +238,105 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         embed = embed_from_emoji_tups(emoji_found_tups)
         await ctx.send(embed=embed)
 
+
+    @commands.command(hidden=True)
+    async def trim(self, ctx):
+        if not await self.bot.is_owner(ctx.author):
+            return
+        await self.trim_rows(force=True)
+
+
+    @commands.command(hidden=True)
+    async def scrape(self, ctx, guild_id=None, channel_id=None):
+        if not await self.bot.is_owner(ctx.author):
+            return
+
+        if guild_id:
+            guild = self.bot.get_guild(int(guild_id))
+        else:
+            guild = ctx.guild
+
+        if not guild:
+            log.info('scrape: could not find guild id: %s', guild_id)
+            return
+
+        log.info('scrape: starting on guild id: %s', guild.id)
+
+        if channel_id:
+            # guild.get_channel() returns List[discord.abc.GuildChannel] or None
+            channel = guild.get_channel(channel_id)
+            channels = [channel]
+
+        else:
+            channels = guild.channels
+
+        if not any(channels):
+            log.info('scrape: could not find any channels, aborting '
+                     '(guild_id: %s channel_id: %s)',
+                     guild_id,
+                     channel_id)
+            return
+
+        channels_scraped = 0
+        rows_added = 0
+        parse = self.parse_msg_for_emoji
+
+        for channel in filter(None, channels):
+            # Voice channels have no history
+            if not hasattr(channel, 'history'):
+                continue
+
+            try:
+                async for uids_reacts in channel.history().map(parse):
+                    unique_reacts = len(uids_reacts)
+                    if not unique_reacts:
+                        continue
+
+                    # psycopg2 placeholders that are substituted for actual data
+                    # during execute
+                    placeholders = ','.join(['(%s, %s, %s)'] * unique_reacts)
+                    query = (f'INSERT INTO emojistats(tstamp, userid, emojistr) '
+                             f'VALUES {placeholders} ON CONFLICT DO NOTHING;')
+
+                    # Flatten the data
+                    # [(uid, raw)...] -> [time, uid1, raw1, time, uid2, raw2...]
+                    data = list(chain.from_iterable(uids_reacts))
+
+                    await self.db_execute(query, data)
+                    rows_added += unique_reacts
+
+                    if rows_added >= ROW_COUNT_HARD_CAP:
+                        log.info('scrape: exceeded hardcap, halting (%s >= %s)',
+                                 rows_added, ROW_COUNT_HARD_CAP)
+                        break
+                channels_scraped += 1
+
+            except BaseException as e:
+                log.info('scrape: failed to scrape channel id: %s (%s: %s)',
+                         channel.id, e.__class__.__name__, e)
+
+        log.info('scrape: scraped %s unique reacts from %s channels',
+                 rows_added, channels_scraped)
+        await self.trim_rows()
+
+
+    async def parse_msg_for_emoji(self, message):
+        author_id = message.author.id
+        tstamp = message.created_at
+        # This function parses emoji as having same timestamp as the message it
+        # reacts to (as opposed to when the react was added). This is to
+        # consistently count instances of emoji use as unique to each message
+        # (using the timestamp as a unique identifier).
+
+        content_emoji = set((author_id, raw)
+                            for raw, _, _ in find_emoji(message.content))
+
+        content_emoji_add = content_emoji.add
+
+        for react in message.reactions:
+            react_raw = str(react)
+            async for user in react.users():
+                content_emoji_add((user.id, react_raw))
+
+        return [(tstamp, user_id, react_raw)
+                for user_id, react_raw in content_emoji]

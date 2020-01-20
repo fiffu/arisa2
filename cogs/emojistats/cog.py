@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 ROW_COUNT_HARD_CAP = 5000
 ROW_COUNT_SOFT_CAP = 1000
 
-EMOJI_STRING_PATTERN = re.compile(r'\<\:(?P<name>.+)\:(?P<uid>\d+)\>')
+EMOJI_STRING_PATTERN = re.compile(r'\<\:(?P<name>.*?)\:(?P<uid>\d+)\>')
 
 
 def find_emoji(str_content):

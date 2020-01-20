@@ -83,21 +83,16 @@ class DatabaseCogMixin:
 
 
     async def db_query_generating(self, *args, **kwargs):
-        """Similar to db_query(), but yields rows instead of returning list
-
-        FIXME: TypeError: 'async for' requires an object with __aiter__ method, 
-               got coroutine
-        """
-        raise NotImplementedError
-        # async with self.db_pool.acquire() as conn:
-        #     async with conn.cursor(cursor_factory=DictCursor) as cur:
-        #         await cur.execute(*args, **kwargs)
-        #         try:
-        #             async for row in cur:
-        #                 return row  # return doesn't terminate, just yields
-        #         except psycopg2.ProgrammingError:
-        #             # No results
-        #             pass
+        """Similar to db_query(), but yields rows instead of returning list"""
+        async with self.db_pool.acquire() as conn:
+            async with conn.cursor(cursor_factory=DictCursor) as cur:
+                await cur.execute(*args, **kwargs)
+                try:
+                    async for row in cur:
+                        yield row
+                except psycopg2.ProgrammingError:
+                    # No results
+                    pass
 
 # class SomeCog(DatabaseCogMixin, commands.Cog):
 #     @commands.Cog.listener()

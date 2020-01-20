@@ -97,7 +97,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         userid = user.id
 
         tstamp = reaction.message.created_at  # in UTC
-        recipientid = tstamp = reaction.message.author.id
+        recipientid = reaction.message.author.id
 
         await self.bump_emoji_usage(emoji_str, userid, tstamp, recipientid,
                                     removing)

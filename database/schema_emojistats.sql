@@ -3,6 +3,7 @@ CREATE TABLE "emojistats" (
     tstamp      TIMESTAMP   NOT NULL,
     userid      BIGINT      NOT NULL,
     emojistr    TEXT        NOT NULL,
+    recipientid BIGINT,
     PRIMARY KEY (tstamp, userid, emojistr)
 );
 

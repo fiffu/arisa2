@@ -92,12 +92,15 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         if self.is_me(user):
             return
 
-        emoji = reaction.emoji
+        emoji_str = str(reaction.emoji)
 
-        emoji_str = str(emoji)
         userid = user.id
+
         tstamp = reaction.message.created_at  # in UTC
-        await self.bump_emoji_usage(emoji_str, userid, tstamp, removing)
+        recipientid = tstamp = reaction.message.author.id
+
+        await self.bump_emoji_usage(emoji_str, userid, tstamp, recipientid,
+                                    removing)
 
 
     @commands.Cog.listener()
@@ -122,7 +125,8 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                                emojistr: str,
                                userid: int,
                                tstamp: datetime,
-                               remove: bool):
+                               recipientid: int = None,
+                               remove: bool = False):
         if DEBUGGING:
             log.info('Skip %scrementing for %s',
                      'de' if remove else 'in',
@@ -130,10 +134,10 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             return
 
         query = """
-            INSERT INTO emojistats(emojistr, userid, tstamp)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (emojistr, userid, tstamp)
-                    DO NOTHING;"""
+            INSERT INTO emojistats(emojistr, userid, tstamp, recipientid)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT DO NOTHING;"""
+        data = [emojistr, userid, tstamp, recipientid]
 
         if remove:
             query = """
@@ -141,8 +145,9 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                     WHERE emojistr = %s
                     AND userid = %s
                     AND tstamp = %s;"""
+            data = [emojistr, userid, tstamp]
 
-        await self.db_execute(query, [emojistr, userid, tstamp])
+        await self.db_execute(query, data)
         self.rows_count += (-1 if remove else 1)
 
         if remove:
@@ -166,7 +171,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                     OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
             )
             DELETE FROM emojistats
-                WHERE (tstamp, userid, emojistr)
+                WHERE (tstamp, userid, emojistr, recipient)
                 IN (SELECT * FROM delete_these)
             RETURNING *;"""
 
@@ -176,7 +181,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         # For counting emoji among rows targeted for archiving
         emoji_ctr = Counter()
 
-        # Push row data into counter object
+        # Push archived rows into counter object
         for row in await self.db_query(query):
             ts = row['tstamp']
             # Use latest tstamp in batch as the tstamp for archive row
@@ -278,8 +283,8 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             return
 
         channels_scraped = 0
-        rows_added = 0
-        parse = self.parse_msg_for_emoji
+        emojis_scraped = 0
+        parser = self.parse_msg_emoji
 
         for channel in filter(None, channels):
             # Voice channels have no history
@@ -287,40 +292,24 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                 continue
 
             try:
-                async for uids_reacts in channel.history().map(parse):
-                    unique_reacts = len(uids_reacts)
-                    if not unique_reacts:
-                        continue
+                async for uids_reacts in channel.history().map(parser):
+                    emojis_scraped += await self.ingest_emoji(uids_reacts)
 
-                    # psycopg2 placeholders that are substituted for actual data
-                    # during execute
-                    placeholders = ','.join(['(%s, %s, %s)'] * unique_reacts)
-                    query = (f'INSERT INTO emojistats(tstamp, userid, emojistr) '
-                             f'VALUES {placeholders} ON CONFLICT DO NOTHING;')
-
-                    # Flatten the data
-                    # [(uid, raw)...] -> [time, uid1, raw1, time, uid2, raw2...]
-                    data = list(chain.from_iterable(uids_reacts))
-
-                    await self.db_execute(query, data)
-                    rows_added += unique_reacts
-
-                    if rows_added >= ROW_COUNT_HARD_CAP:
-                        log.info('scrape: exceeded hardcap, halting (%s >= %s)',
-                                 rows_added, ROW_COUNT_HARD_CAP)
-                        break
                 channels_scraped += 1
 
-            except BaseException as e:
-                log.info('scrape: failed to scrape channel id: %s (%s: %s)',
-                         channel.id, e.__class__.__name__, e)
+            except AssertionError:
+                break
+
+            # except BaseException as e:
+            #     log.info('scrape: failed to scrape channel id: %s (%s: %s)',
+            #              channel.id, e.__class__.__name__, e)
 
         log.info('scrape: scraped %s unique reacts from %s channels',
-                 rows_added, channels_scraped)
+                 emojis_scraped, channels_scraped)
         await self.trim_rows()
 
 
-    async def parse_msg_for_emoji(self, message):
+    async def parse_msg_emoji(self, message):
         author_id = message.author.id
         tstamp = message.created_at
         # This function parses emoji as having same timestamp as the message it
@@ -328,7 +317,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         # consistently count instances of emoji use as unique to each message
         # (using the timestamp as a unique identifier).
 
-        content_emoji = set((author_id, raw)
+        content_emoji = set((author_id, raw, None)
                             for raw, _, _ in find_emoji(message.content))
 
         content_emoji_add = content_emoji.add
@@ -336,7 +325,32 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         for react in message.reactions:
             react_raw = str(react)
             async for user in react.users():
-                content_emoji_add((user.id, react_raw))
+                content_emoji_add((user.id, react_raw, author_id))
 
-        return [(tstamp, user_id, react_raw)
-                for user_id, react_raw in content_emoji]
+        return [(tstamp, *tup) for tup in content_emoji]
+
+
+    async def ingest_emoji(self, uids_reacts):
+        unique_reacts = len(uids_reacts)
+        if not unique_reacts:
+            return 0
+
+        current_rows_count = self.rows_count
+        if current_rows_count + unique_reacts > ROW_COUNT_HARD_CAP:
+            log.info('scrape: exceeding hardcap, stop ingesting (%s + %s)',
+                     current_rows_count, unique_reacts)
+            raise AssertionError
+
+        # psycopg2 placeholders that are substituted for actual data
+        # during execute
+        placeholders = ','.join(['(%s, %s, %s, %s)'] * unique_reacts)
+        query = (f'INSERT INTO emojistats(tstamp, userid, emojistr, recipientid) '
+                 f'VALUES {placeholders} ON CONFLICT DO NOTHING;')
+
+        # Flatten the data
+        # [(uid, raw)...] -> [time, uid1, raw1, time, uid2, raw2...]
+        data = list(chain.from_iterable(uids_reacts))
+
+        await self.db_execute(query, data)
+        self.rows_count += unique_reacts
+        return unique_reacts

@@ -197,7 +197,8 @@ class StoveMixin:
             try:
                 soup = BeautifulSoup(page, 'html.parser')
 
-                forum_name = soup.find('h3', class_='header-tit').text.strip()
+                forum_elem = soup.find('h3', class_='header-tit')
+                forum_name = forum_elem.contents[0].strip()
                 forum_url = self.stove_forum_name_urls.get(forum_name)
 
                 container = soup.find('ul', class_='module-list')

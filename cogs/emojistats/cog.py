@@ -160,7 +160,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             log.info('No rows to trim')
             return
 
-        # Ordered by newest to oldest rows, excluding SOFT_CAP newest rows
+        # Ordered by newest to oldest rows, offsetting SOFT_CAP newest rows
         query = f"""
             WITH delete_these AS (
                 SELECT * FROM emojistats
@@ -168,7 +168,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
                     OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
             )
             DELETE FROM emojistats
-                WHERE (tstamp, userid, emojistr, recipient)
+                WHERE (tstamp, userid, emojistr, recipientid)
                 IN (SELECT * FROM delete_these)
             RETURNING *;"""
 

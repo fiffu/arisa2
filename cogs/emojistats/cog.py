@@ -165,7 +165,7 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             WITH delete_these AS (
                 SELECT * FROM emojistats
                     ORDER BY tstamp DESC
-                    OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
+                    LIMIT NULL OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
             )
             DELETE FROM emojistats
                 WHERE (tstamp, userid, emojistr, recipientid)

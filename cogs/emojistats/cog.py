@@ -162,14 +162,13 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
 
         # Ordered by newest to oldest rows, offsetting SOFT_CAP newest rows
         query = f"""
-            WITH delete_these AS (
-                SELECT * FROM emojistats
+            DELETE FROM emojistats
+                WHERE EXISTS (
+                    SELECT * FROM emojistats
                     ORDER BY tstamp DESC
                     LIMIT NULL OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
-            )
-            DELETE FROM emojistats
-                WHERE (tstamp, userid, emojistr, recipientid)
-                IN (SELECT * FROM delete_these)
+                    -- LIMIT NULL OFFSET 1000
+                )
             RETURNING *;"""
 
         # Timestamp to use on the archive row

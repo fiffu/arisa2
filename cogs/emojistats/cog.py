@@ -165,11 +165,15 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
             WITH delete_these AS (
                 SELECT * FROM emojistats
                     ORDER BY tstamp DESC
-                    LIMIT NULL OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
+                    --LIMIT NULL OFFSET {0 if force else ROW_COUNT_SOFT_CAP}
+                    LIMIT NULL OFFSET 1000
             )
             DELETE FROM emojistats
-                WHERE (tstamp, userid, emojistr, recipientid)
-                IN (SELECT * FROM delete_these)
+                USING delete_these
+                WHERE emojistats.tstamp = delete_these.tstamp
+                AND emojistats.userid = delete_these.userid
+                AND emojistats.emojistr = delete_these.emojistr
+                AND emojistats.recipientid = delete_these.recipientid
             RETURNING *;"""
 
         # Timestamp to use on the archive row

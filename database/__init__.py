@@ -81,4 +81,3 @@ def close_pool():
     log.info('Shutting down database connection pool.')
 
 
-sync_setup_pool()

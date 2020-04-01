@@ -1,12 +1,19 @@
 ## arisa2
 
-arisa2 is a rewrite of [Arisa][1.1], a Discord bot created using [`discord.py`][1.2] in early 2018. Since then, various workarounds have been added to the original codebase to support features that were never considered in the initial design.
+Arisa is a [Discord](https://discordapp.com/) bot built on Python with [discord.py](https://pypi.org/project/discord.py/). arisa2 is a major rewrite of the original [Arisa](https://arisa-chan.herokuapp.com) bot, after major breaking changes came in as discord.py graduated to v1.0.
 
-This rewrite effort is mainly motivated by the major [changes][1.3] that come with upgrading to discord.py v1.x, which made large parts of the original code obsolete. At the same time, this is a good occasion for the bot's source code to be made public.
 
-[1.1]:https://arisa-chan.herokuapp.com
-[1.2]:https://discordpy.readthedocs.io/
-[1.3]:https://discordpy.readthedocs.io/en/latest/migrating.html
+## Design
+
+Arisa is designed to run for free on [Heroku](https://heroku.com/), with the PostgreSQL addon (we use [psycopg2](https://pypi.org/project/psycopg2/) bindings). It is recommended that you use [pipenv](https://pypi.org/project/pipenv/) when deploying locally.
+
+Arisa's business logic is implemented with modular [cogs](https://discordpy.readthedocs.io/en/latest/ext/commands/cogs.html), which are loaded selectively at startup. As the use-case is for a guild playing multiple flavour-of-the-month games, cogs allow us to write features targeting a specific game, which can be left unloaded later on.
+
+We have some cog mixins that implement 'middleware' services, for example DatabaseCog providing idiomatic database access. These should be inherited along with discord.ext.commands.Cog when such services are required. Some mixins provide interfaces with web-scraping engines, forming the backbone for our website update tracker. We use [aiohttp](https://pypi.org/project/aiohttp/) for static pages and [Selenium](https://pypi.org/project/selenium/) for dynamic/JS-rendered sites. See the separate readme for setting up the browser drivers and bindings for Selenium.
+
+All required schema are maintained in the `database` folder. Arisa expects to connect to an initialized database, so feed the schema to your database before spinning up.
+
+App-level configuration, such as secrets and tokens, are defined and exported by the `appconfig` module. The configs are declared with ini-style files, which can be overwritten by environment variables. Cog-specific settings are maintained in their own modules.
 
 
 ## Setup
@@ -16,20 +23,19 @@ This rewrite effort is mainly motivated by the major [changes][1.3] that come wi
     git clone https://github.com/fiffu/arisa2.git
     cd arisa2
 
+
 **Basic configuration**
 
-The bot's main configuration file is found in the `appconfig` folder. Individual cogs generally have their own `config.py` file within their own directories.
-
-To ensure the bot runs correctly (or at all), ensure that you configure it properly.
+Arisa's main configuration file is found in the `appconfig` folder. To ensure things run correctly (or at all), ensure that you configure stuff properly.
 
 1. Go to the `/appconfig` directory and make a copy of the `config.conf.DEFAULT`.
 2. Rename the copy to `config.conf`. Only make edits to this copy (they will override the default settings).
 3. All the blank fields should be filled in, unless otherwise indicated.
-4. Detailed instructions are in `appconfig/README`.
+4. Detailed instructions are in README for the `appconfig` module.
 
 **Runtime environment**
 
-Set up Python. Check that you have Python 3.6 or later, and install pipenv ([step-by-step guide][3.1]).
+Set up Python. Check that you have Python 3.6 or later, and install pipenv - [step-by-step guide](https://docs.pipenv.org/en/latest/install/).
 
     python --version
     pip install --user --upgrade pipenv
@@ -39,13 +45,19 @@ Initialize a new pipenv shell, then install dependencies.
     pipenv shell
     pipenv install
 
-[3.1]:https://docs.pipenv.org/en/latest/install/
 
+## Deploying
 
-## Usage
-
-You have to activate the pipenv shell before you start the app:
+You have to activate the pipenv shell first if you are deploying locally:
 
     pipenv shell
     python3 main.py
 
+Otherwise, after setting up a Heroku app and linking the app's git deployment endpoint, push:
+
+    heroku git:remote -a myApp
+    git push heroku master
+
+If you are using Heroku, consider setting up a separate [staging app](https://devcenter.heroku.com/articles/multiple-environments), then adding it as an alternate remote in your main repo. To deploy non-master branches to staging, you can use:
+
+    git push staging myBranch:master

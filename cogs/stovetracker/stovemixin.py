@@ -48,7 +48,7 @@ class StovePost(object):
     def url(self):
         if self._url:
             return self._url
-        self._url = self.soup.find('a').attrs['href']
+        self._url = 'https:' + self.soup.find('a').attrs['href']
         return self._url
 
 

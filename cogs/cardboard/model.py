@@ -29,7 +29,7 @@ SINKS = config.SINKS
 EXCLUDE = set(config.EXCLUDE_POSTS_TAGGED_WITH)
 
 @memoized
-def search(search_string):
+def dumb_search(search_string):
     return client.post_list(tags=search_string, limit=POSTS_PER_QUERY)
 
 
@@ -84,23 +84,32 @@ async def prep_search_string(candidates: List[str]) -> str:
 
 
 async def smart_search(query, explicit_rating) -> List[Post]:
+    """Does some parsing on the query before searching.
+
+    Args
+    query: str - search query to parse
+    explicit_rating: str - should match /-?[eqs]/ if provided, which is parsed
+                           into extra search constraint as /-?rating:(e|q|s)/
+    """
     # query as single tag
     cands, alias_applied = Parser(spaces_to_underscore=True).parse(query)
     search_string = await prep_search_string(cands)
 
     # inject rating
     if explicit_rating:
+        minus = ''
         rating = 's'
+
         if explicit_rating[-1] in ['e', 'q', 's']:
             rating = explicit_rating[-1]
+            if explicit_rating.startswith('-'):
+                minus = '-'
 
-        add_to_search = f'rating:{rating}'
-        if explicit_rating.startswith('-'):
-            add_to_search = '-' + add_to_search
+        add_to_search = f'{minus}rating:{rating}'
 
         search_string += (' ' + add_to_search)
 
-    posts = search(search_string)
+    posts = dumb_search(search_string)
     return posts, search_string
 
 

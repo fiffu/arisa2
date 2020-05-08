@@ -23,6 +23,8 @@ class NotChannelError(ValueError):
 
 
 class PublishSubscribe(DatabaseCogMixin, commands.Cog):
+    """The interface between channel subscribes and updates from TrackerCogs"""
+
     def __init__(self, bot):
         super().__init__()
         self.bot = bot

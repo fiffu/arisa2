@@ -24,11 +24,6 @@ class DatabaseCogMixin:
         self._after_setup_pool = []
 
 
-    @property
-    def db_pool(self):
-        return get_pool()
-
-
     @commands.Cog.listener()
     async def on_ready(self):
         await setup_pool()
@@ -39,7 +34,7 @@ class DatabaseCogMixin:
 
     def cog_unload(self):
         """cog_unload is an interface specified by discordpy API"""
-        close_pool()
+        close_pool(self.bot.loop)
 
 
     def after_setup_pool(self, corofunc):
@@ -55,7 +50,8 @@ class DatabaseCogMixin:
     async def db_execute(self, *args, **kwargs):
         """Shorthand to plainly execute a statement to the database"""
         rows = []
-        async with self.db_pool.acquire() as conn:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(*args, **kwargs)
                 try:
@@ -70,7 +66,8 @@ class DatabaseCogMixin:
     async def db_query(self, *args, **kwargs):
         """Similar to db_execute(), but uses a DictCursor for reading"""
         rows = []
-        async with self.db_pool.acquire() as conn:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
             async with conn.cursor(cursor_factory=DictCursor) as cur:
                 await cur.execute(*args, **kwargs)
                 try:
@@ -84,7 +81,8 @@ class DatabaseCogMixin:
 
     async def db_query_generating(self, *args, **kwargs):
         """Similar to db_query(), but yields rows instead of returning list"""
-        async with self.db_pool.acquire() as conn:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
             async with conn.cursor(cursor_factory=DictCursor) as cur:
                 await cur.execute(*args, **kwargs)
                 try:

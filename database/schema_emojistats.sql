@@ -1,3 +1,5 @@
+-- pgsql
+
 DROP TABLE IF EXISTS emojistats;
 CREATE TABLE "emojistats" (
     tstamp      TIMESTAMP   NOT NULL,

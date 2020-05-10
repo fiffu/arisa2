@@ -16,10 +16,11 @@ log = logging.getLogger(__name__)
 def make_post_title(post):
     max_title_len = 256
 
-    artist = escape_markdown(post.get('tag_string_artist', ''))
+    artist = post.get('tag_string_artist', '')
+    artist = escape_markdown(artist.replace(' ', ', ').replace('_', ' '))
     artist_str = ''
     if artist:
-      artist_str = f' drawn by ' + post['tag_string_artist'].replace(' ', ', ')
+      artist_str = f' drawn by ' + artist
 
     curr_len = len(artist) + len('``')
     characters_to_add = post['tag_string_character'].split()
@@ -27,7 +28,7 @@ def make_post_title(post):
 
     # Include chars in title until we run out of space
     while characters_to_add:
-        next_char = escape_markdown(characters_to_add[0])
+        next_char = escape_markdown(characters_to_add[0].replace('_', ' '))
         if curr_len + len(f', {next_char} and 9999 others') > max_title_len:
             # Stop if next addition would exceed max title length
             break
@@ -38,7 +39,8 @@ def make_post_title(post):
     # This means the first name is already too long
     if (not include_chars) and characters_to_add:
         trunc_name_to = max_title_len - len('... and 0000 others')
-        next_char = escape_markdown(characters_to_add.pop(0))
+        next_char = characters_to_add.pop(0)
+        next_char = escape_markdown(next_char.replace('_', ' '))
         next_char = next_char[:trunc_name_to]
         include_chars.append(f'{next_char}...')
 

@@ -33,7 +33,8 @@ def make_post_title(post):
             # Stop if next addition would exceed max title length
             break
         curr_len += len(next_char)
-        include_chars.append(characters_to_add.pop(0))
+        include_chars.append(next_char)
+        characters_to_add.pop(0)
 
     # Check if no chars included, but to_add list is still populated
     # This means the first name is already too long

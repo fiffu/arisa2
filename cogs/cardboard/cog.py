@@ -26,13 +26,9 @@ class DanbooruSearch(commands.Cog):
         return cands, alias_applied
 
     @commands.command(hidden=True)
-    async def tagparse(self, ctx, query: str):
+    async def tagparse(self, ctx, *args):
         # Extract the argstr, catch cases where user forgets doublequotes
-        _, *argstr = ctx.message.content.split(None, 1)
-        argstr = argstr[0] if argstr else ''
-        if len(argstr) > len(query):
-            query = argstr
-
+        query = ' '.join(args)
         cands, alias_applied = await self._tagparse(query)
         msg = f'Parsing `{query}` yields:' + codeblocked('\n'.join(cands))
 

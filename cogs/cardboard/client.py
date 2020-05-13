@@ -43,3 +43,6 @@ CLIENT = DanbooruCustom(
     username=USER,
     api_key=API_KEY
 )
+
+# For some reason Pybooru uses http instead of https for API
+CLIENT.site_url = 'https://danbooru.donmai.us'

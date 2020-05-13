@@ -71,10 +71,10 @@ class Parser:
 
         for token in userinput.split():
             if parseargs['resolve_aliases']:
-                for alias, actual in ALIASES.items():
-                    if alias in token:
-                        token = userinput.replace(alias, actual)
-                        alias_applied.append((alias, actual))
+                if token in ALIASES:
+                    actual = ALIASES[token]
+                    alias_applied.append((token, actual))
+                    token = actual
             candidates.append(token)
 
         return candidates, alias_applied

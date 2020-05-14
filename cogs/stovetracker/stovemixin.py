@@ -54,22 +54,27 @@ class StovePost(object):
 
     @property
     def image_url(self):
-        """FIXME: Find a threadsafe way to grab the post's banner
-
-        So far, we have to put in a http call to the event page to pull out
-        the banner. Using the driver takes too long and the driver's state is
-        not threadsafe.
-        One possible solution is to modify fetch() to spin up a driver (or
-        fork from the existing one) every time we need to grab a page, but
-        we need ot check the memory overhead of doing that first.
-        """
+        """Guess image using title so we avoid looking inside post html"""
         if self._image_url:
             return self._image_url
 
-        if '[Event]' in self.title:
-            self._image_url = 'https://i.imgur.com/NmOjFEb.png'
-        else:
-            self._image_url = 'https://i.imgur.com/iqv0kEr.png'
+        self._image_url = 'https://i.imgur.com/69UGmyY.png'  # 'Notice'
+
+        imgdict = {
+            '[Banned]':
+                'https://i.imgur.com/LPqrc7d.png',
+            '[Event]':
+                'https://i.imgur.com/6NU246G.png',
+            'Temporary Maintenance':
+                'https://i.imgur.com/5n67kHG.png',
+            'Update Content':
+                'https://i.imgur.com/MEnXL4G.png',
+            # 'Developer Note' is assigned in StoveMixin
+        }
+
+        for keyword, imgurl in imgdict.items():
+            if keyword in self.title:
+                self._image_url = imgurl
 
         return self._image_url
 
@@ -135,6 +140,9 @@ class StovePost(object):
             embed.set_image(url=self.image_url)
 
             fname, furl = self.forum_name, self.forum_url
+            if fname == 'Developer Notes ':
+                embed.set_image(url='https://i.imgur.com/C3Gbwwc.png')
+            
             forumlink = f'[{fname}]({furl})'
             embed.add_field(name='Posted in forum', value=forumlink)
             embed.set_footer(text='To stop receiving updates from this topic, '

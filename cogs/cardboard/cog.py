@@ -93,41 +93,39 @@ class DanbooruSearch(commands.Cog):
 
 
     async def search(self, ctx, query, explicit_rating):
-        async with ctx.typing():
-            query = query.lower()
-            posts, search_string = await smart_search(query, explicit_rating)
-            selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
+        query = query.lower()
+        posts, search_string = await smart_search(query, explicit_rating)
+        selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
 
-            if not selected:
-                msg = FEEDBACK.no_results(query=query)
-                if explicit_rating is '-s':
-                    msg = FEEDBACK.no_lewd_results(query=query)
-                await ctx.send(content=msg)
-                return
+        if not selected:
+            msg = FEEDBACK.no_results(query=query)
+            if explicit_rating is '-s':
+                msg = FEEDBACK.no_lewd_results(query=query)
+            await ctx.send(content=msg)
+            return
 
-            post, url = selected[0]
-            embed = make_embed(post, url, search_string)
-            await ctx.send(content=None, embed=embed)
+        post, url = selected[0]
+        embed = make_embed(post, url, search_string)
+        await ctx.send(content=None, embed=embed)
 
 
     @commands.command()
     async def dan(self, ctx, *args):
-        async with ctx.typing():
-            cmd, *query = ctx.message.content.split()
-            if not query:
-                return
+        cmd, *query = ctx.message.content.split()
+        if not query:
+            return
 
-            query = ' '.join(query)
-            posts = dumb_search(query)
-            selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
+        query = ' '.join(query)
+        posts = dumb_search(query)
+        selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
 
-            if not selected:
-                await ctx.send(content=FEEDBACK.no_results(query=query))
-                return
+        if not selected:
+            await ctx.send(content=FEEDBACK.no_results(query=query))
+            return
 
-            post, url = selected[0]
-            embed = make_embed(post, url, query, footer=False)
-            await ctx.send(content=None, embed=embed)
+        post, url = selected[0]
+        embed = make_embed(post, url, query, footer=False)
+        await ctx.send(content=None, embed=embed)
 
 
 

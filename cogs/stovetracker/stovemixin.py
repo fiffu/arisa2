@@ -145,7 +145,7 @@ class StovePost(object):
             
             forumlink = f'[{fname}]({furl})'
             embed.add_field(name='Posted in forum', value=forumlink)
-            embed.set_footer(text='To stop receiving updates from this topic, '
+            embed.set_footer(text='To stop updates from this topic, '
                                   f'type !untrack {topic}')
             return embed
 

@@ -84,7 +84,7 @@ class Stream:
         emb.colour = Colour(0xEE4488)  # Magenta
 
         emb.set_thumbnail(url=self.get_thumbnail(width=568, height=360))
-        emb.set_footer(text=f'To stop receiving updates from this topic, '
+        emb.set_footer(text=f'To stop updates from this topic, '
                             f'type !untrack {topic}')
         return emb
 

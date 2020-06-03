@@ -13,50 +13,59 @@ from .config import DAN_COLOUR, DAN_URL_STUB, DAN_SEARCH_STUB
 log = logging.getLogger(__name__)
 
 
+def escape_tag(s):
+    return escape_markdown(s.replace('_', ' '))
+
+
+def merge_string(strlist, maxlen, delim=', ', end='...', key=None):
+    maxlen -= len(end)
+    dlen = len(delim)
+    
+    num_insert = 0
+    cumu_len = 0
+
+    for string in strlist:
+        if key:
+            string = key(string)
+        
+        strlen = len(string) + dlen
+        if (strlen + cumu_len) > maxlen:
+            break
+        
+        num_insert += 1
+        cumu_len += strlen
+    
+    joined = delim.join(strlist[:num_insert])
+    end = end if num_insert < len(strlist) else ''
+    return joined + end, num_insert
+
+
 def make_post_title(post):
     max_title_len = 256
 
-    artist = post.get('tag_string_artist', '')
-    artist = escape_markdown(artist.replace(' ', ', ').replace('_', ' '))
-    artist_str = ''
-    if artist:
-      artist_str = f' drawn by ' + artist
+    artist_tag = post.get('tag_string_artist', '')
+    artist = escape_tag(artist_tag.replace(' ', ', '))
+    drawnby = f' drawn by {artist}' if artist else ''
 
-    curr_len = len(artist) + len('``')
-    characters_to_add = post['tag_string_character'].split()
-    include_chars = []
+    char_len = max_title_len - len(drawnby) - len(' and 9999 others')
 
-    # Include chars in title until we run out of space
-    while characters_to_add:
-        next_char = escape_markdown(characters_to_add[0].replace('_', ' '))
-        if curr_len + len(f', {next_char} and 9999 others') > max_title_len:
-            # Stop if next addition would exceed max title length
-            break
-        curr_len += len(next_char)
-        include_chars.append(next_char)
-        characters_to_add.pop(0)
+    chars = post['tag_string_character'].split()
+    chars_str, num_added = merge_string(chars, char_len, end='', key=escape_tag)
 
-    # Check if no chars included, but to_add list is still populated
-    # This means the first name is already too long
-    if (not include_chars) and characters_to_add:
-        trunc_name_to = max_title_len - len('... and 0000 others')
-        next_char = characters_to_add.pop(0)
-        next_char = escape_markdown(next_char.replace('_', ' '))
-        next_char = next_char[:trunc_name_to]
-        include_chars.append(f'{next_char}...')
+    # Check if no chars added, this means the first name is already too long
+    if chars and num_added == 0:
+        trunc_len = char_len - len('...')
+        char = escape_tag(characters_to_add[0])
+        char = char[:trunc_len]
+        chars_str = char + '...'
 
     remaining = ''
-    if characters_to_add:
-        num_left = len(characters_to_add)
+    num_left = len(chars) - num_added
+    if num_left > 0:
         s = 's' if num_left != 1 else ''
         remaining = f' and {num_left} other{s}'
 
-    title = '{chars}{remaining}{drawnby}'.format(
-        chars=', '.join(include_chars) if include_chars else '',
-        remaining=remaining,
-        drawnby=artist_str
-    )
-    title = title or '(untitled)'
+    title = f'{chars}{remaining}{drawnby}' or '(untitled)'
     assert(len(title) <= max_title_len)
 
     return title
@@ -80,6 +89,9 @@ def make_embed(post, img_url, tags_str, footer=True):
             f'[`{name}`]({DAN_SEARCH_STUB + urllib_parse.quote(name)}) ({cnt})'
             for name, cnt in zip(tags, counts)
         )
+
+    md5 = post.get('md5', '(none)')
+    log.info(f'Making embed for post: img_url={img_url}, md5={md5}')
 
     title = make_post_title(post)
     embed = Embed(title=title,
@@ -109,8 +121,5 @@ def make_embed(post, img_url, tags_str, footer=True):
 
     if footer:
         embed.set_footer(text='Matched against tag: ' + tags_str.split()[0])
-
-    md5 = post.get('md5', '(none)')
-    log.info(f'Generate embed for post: img_url={img_url}, md5={md5}')
 
     return embed

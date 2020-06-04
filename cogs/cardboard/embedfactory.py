@@ -20,21 +20,16 @@ def escape_tag(s):
 def merge_string(strlist, maxlen, delim=', ', end='...', key=None):
     maxlen -= len(end)
     dlen = len(delim)
-    
     num_insert = 0
     cumu_len = 0
-
     for string in strlist:
         if key:
             string = key(string)
-        
         strlen = len(string) + dlen
         if (strlen + cumu_len) > maxlen:
             break
-        
         num_insert += 1
         cumu_len += strlen
-    
     joined = delim.join(strlist[:num_insert])
     end = end if num_insert < len(strlist) else ''
     return joined + end, num_insert
@@ -65,7 +60,7 @@ def make_post_title(post):
         s = 's' if num_left != 1 else ''
         remaining = f' and {num_left} other{s}'
 
-    title = f'{chars}{remaining}{drawnby}' or '(untitled)'
+    title = f'{chars_str}{remaining}{drawnby}' or '(untitled)'
     assert(len(title) <= max_title_len)
 
     return title

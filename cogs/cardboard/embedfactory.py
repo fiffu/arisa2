@@ -20,16 +20,21 @@ def escape_tag(s):
 def merge_string(strlist, maxlen, delim=', ', end='...', key=None):
     maxlen -= len(end)
     dlen = len(delim)
+
     num_insert = 0
     cumu_len = 0
+
     for string in strlist:
         if key:
             string = key(string)
+
         strlen = len(string) + dlen
         if (strlen + cumu_len) > maxlen:
             break
+
         num_insert += 1
         cumu_len += strlen
+
     joined = delim.join(strlist[:num_insert])
     end = end if num_insert < len(strlist) else ''
     return joined + end, num_insert
@@ -75,16 +80,31 @@ def get_tag_counts(*tags):
     return [taglist.get(name, 0) for name in tags]
 
 
-def make_embed(post, img_url, tags_str, footer=True):
-    def make_field_val(*tags):
-        if not tags:
-            return '(none)'
-        counts = get_tag_counts(*tags)
-        return '\n'.join(
-            f'[`{name}`]({DAN_SEARCH_STUB + urllib_parse.quote(name)}) ({cnt})'
-            for name, cnt in zip(tags, counts)
-        )
+def make_field_val(*tags):
+    def format_val(tagname, postcount):
+        link = DAN_SEARCH_STUB + urllib_parse.quote(tagname)
+        return f'[`{tagname}`]({link})({postcount})'
 
+    field_size = 512  # 1024 is the official limit but be conservative
+    if not tags:
+        return '(none)'
+
+    counts = get_tag_counts(*tags)
+    formatted = [format_val(name, cnt) for name, cnt in zip(tags, counts)]
+
+    field_str, num_added = merge_string(formatted,
+                                        maxlen=field_size - len(' and 9999 others'),
+                                        delim='\n',
+                                        end='')
+
+    remain = len(tags) - num_added
+    s = '' if remain == 1 else 's'
+    end = str('\nand %d other%s' % (remain, s)) if remain else ''
+
+    return field_str + end
+
+
+def make_embed(post, img_url, tags_str, footer=True):
     md5 = post.get('md5', '(none)')
     log.info(f'Making embed for post: img_url={img_url}, md5={md5}')
 

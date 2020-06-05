@@ -21,13 +21,13 @@ def merge_string(strlist, maxlen, delim=', ', end='...', key=None):
     maxlen -= len(end)
     dlen = len(delim)
 
+    if key:
+        strlist = [key(string) for string in strlist]
+
     num_insert = 0
     cumu_len = 0
 
     for string in strlist:
-        if key:
-            string = key(string)
-
         strlen = len(string) + dlen
         if (strlen + cumu_len) > maxlen:
             break
@@ -67,21 +67,30 @@ def make_post_title(post):
 
     title = f'{chars_str}{remaining}{drawnby}' or '(untitled)'
     assert(len(title) <= max_title_len)
-
     return title
 
 
 def get_tag_counts(*tags):
-    tagstr = ','.join(tags)
-    taglist = {
-        t.get('name'): t.get('post_count', 0)
-        for t in CLIENT.tag_list(name_comma=tagstr)
-    }
+    # Fetch the count for at most 20 tags at once
+    # Map tagname -> tagcount
+    # Output a list by looking up the tagnames in the name->count mapping
+    step = 20
+    taglist = {}
+    for i in range(len(tags) // step + 1):
+        p, q = step * i, step * (i + 1)
+        batch_tagstr = ','.join(tags[p:q])
+        batch = {
+            t.get('name'): t.get('post_count', 0)
+            for t in CLIENT.tag_list(name_comma=batch_tagstr)
+        }
+        taglist.update(batch)
+
     return [taglist.get(name, 0) for name in tags]
 
 
 def make_field_val(*tags):
     def format_val(tagname, postcount):
+        tagname = escape_tag(tagname)
         link = DAN_SEARCH_STUB + urllib_parse.quote(tagname)
         return f'[`{tagname}`]({link})({postcount})'
 

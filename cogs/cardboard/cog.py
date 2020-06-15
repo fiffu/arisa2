@@ -16,6 +16,11 @@ from .texthelpers import codeblocked, make_two_cols
 FEEDBACK = FeedbackGetter(config.FEEDBACK)
 
 
+IGNORE_IDS = [
+    216946422598074368,
+]
+
+
 class DanbooruSearch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -93,6 +98,8 @@ class DanbooruSearch(commands.Cog):
 
 
     async def search(self, ctx, query, explicit_rating):
+        if ctx.author.id in IGNORE_IDS:
+            return
         query = query.lower()
         posts, search_string = await smart_search(query, explicit_rating)
         selected: List[Tuple[dict, str]] = await select_posts(posts, 1)
@@ -111,6 +118,8 @@ class DanbooruSearch(commands.Cog):
 
     @commands.command()
     async def dan(self, ctx, *args):
+        if ctx.author.id in IGNORE_IDS:
+            return
         cmd, *query = ctx.message.content.split()
         if not query:
             return

@@ -30,6 +30,28 @@ on each platform will only have to provide some 'configuration' params.
 ### Example
 
 ```python
+    class StalkJimmyBean(TwitchMixin, TrackerCog):
+        """A cog that maps multiple channels to one topic 'jimbean'
+        In this case, we are stalking someone with two accounts, named
+        'JimmyBean' and 'JimBean123'
+        """
+        @property
+        def topic(self):
+            # Overwrite property required by TrackerCog
+            return 'jimbean'
+
+        @property
+        def target_usernames(self):
+            # Overwrite property required by TwitchMixin
+            return ['JimmyBean', 'JimBean123']
+
+    class StalkEsports(TwitchMixin, TrackerCog):
+        """Another case, this time for some esports channel"""
+        @property
+        def topic(self): return 'esports'
+        @property
+        def target_usernames(self): return ['esportschannel']
+
     class TwitchMixin:
         """A mixin that defines some common action on the Twitch platform
         In this case, we want to get the stream of some users, which will be
@@ -39,6 +61,10 @@ on each platform will only have to provide some 'configuration' params.
         """
         @property
         def target_usernames(self):
+            """Abstract, expects a list of usernames.
+            To be implemented by the cog that controls the
+            username-to-topic mapping.
+            """
             raise NotImplementedError
 
         @property
@@ -55,43 +81,20 @@ on each platform will only have to provide some 'configuration' params.
             return streams
 
         async def do_work():
-            streams = await self.fetch(...)
+            streams = await self.call_endpoint(self.users)
             # pubsubcog.push_to_topic() accepts replies as dicts
             # defining two keys, 'content': str and 'embed': discord.Embed
             replies = [dict(content='Stream up!',
-                            embed=TwitchStream(data).to_embed())
-                       for data in streams]
+                            embed=TwitchStream.to_embed(json_data))
+                       for json_data in streams]
             self.pubsubcog.push_to_topic(self.topic, replies)
             return True
 
     class TwitchStream:
         """Wrapper over Twitch API response, with embed conversion method"""
-        def to_embed():
-            pass
-
-    class StalkJimmyBean(TwitchMixin, TrackerCog):
-        """Define an individual case on Twitch platform
-        In this case, we are stalking someone with two accounts, named
-        'JimmyBean' and 'JimBean123'
-        """
-        @property
-        def topic(self):
-            # Overwrite property so people can to subscribe to this particular
-            # case of alerts
-            return 'jimbean'
-
-        @property
-        def target_usernames(self):
-            # Overwrite property required by TwitchMixin
-            return ['JimmyBean', 'JimBean123']
-
-    class StalkEsports(TwitchMixin, TrackerCog):
-        """Another case, this time for esports channels"""
-        @property
-        def topic(self): return 'esports'
-
-        @property
-        def target_usernames(self) return ['esportschannel']
+        @staticmethod
+        def to_embed(stream_json_data):
+            return discord.Embed(...)
 ```
 
 ### Integration with other components

@@ -84,6 +84,12 @@ class SgxResearchPost:
 
 class SgxMixin:
     """Mixin to be used with discord.ext.command.Cog"""
+
+    sgx_page_name_urls = {
+        'Analyst Research': 
+            'https://www.sgx.com/research-education/analyst-research'
+    }
+
     async def handle_new_posts(self, new_posts: Sequence[SgxResearchPost]):
         topic = self.topic
         pscog = self.pubsubcog

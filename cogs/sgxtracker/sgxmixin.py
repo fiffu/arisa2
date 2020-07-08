@@ -127,19 +127,19 @@ class SgxMixin:
         Their site app reads this data and renders to the page.
         """
         scripts = [
-            elem.text for elem in soup.find_all('script')
+            elem.text.strip() for elem in soup.find_all('script')
             if len(elem.text) > 100000
         ]
         if not scripts:
             return None
-        script = scripts[0].text.strip()
+        script = scripts[0]
         js = script[len('window._sgxComApp_pageData = '):-1]  # -1 is trailing ;
         return json.loads(js)
 
 
     @staticmethod
     def read_page_data(page_data):
-        content = page_data['data']['route']['data']
+        content = page_data['data']['route']['data']['data']
 
         # page_title = content['title']
 
@@ -154,7 +154,7 @@ class SgxMixin:
             for month in accordion:
                 # month['itemTitle'] => May 2020 etc
                 downloadables = [sec['downloadItems']
-                                 for sec in month['widgets']
+                                 for sec in month['data']['widgets']
                                  if 'downloadItems' in sec]
                 if not downloadables:
                     continue

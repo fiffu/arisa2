@@ -4,7 +4,6 @@ from appconfig import DEBUGGING
 
 # Debugging
 from .debugcog import DebugCog
-from .generalcog import General
 from .emojistats.cog import EmojiTools
 
 # Custom tricks and tools
@@ -23,6 +22,7 @@ from .plugtracker.browndustcog import PlugBrownDust
 from .publishsubscribecog import PublishSubscribe
 from .stovetracker.epicsevencog import StoveEpicSeven
 from .tracking.twitchcog import TwitchMogra
+from .sgxtracker.sgxresearchcog import SgxResearch
 
 
 
@@ -46,4 +46,5 @@ ENABLED_COGS = [
     PublishSubscribe,
     StoveEpicSeven,
     TwitchMogra,
+    SgxResearch,
 ]

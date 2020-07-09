@@ -22,7 +22,7 @@ class SgxResearchPost:
 
     def __init__(self, json_data):
         # json_data is a dict with these keys:
-        #   label source mediaType name date url filemime
+        #   label author mediaType name date url filemime
         self.data = json_data
 
     @property
@@ -44,7 +44,7 @@ class SgxResearchPost:
     @property
     def author(self):
         return {
-            'name': self.data['source'],
+            'name': self.data['author'],
         }
 
     @property
@@ -86,7 +86,7 @@ class SgxMixin:
     """Mixin to be used with discord.ext.command.Cog"""
 
     sgx_page_name_urls = {
-        'Analyst Research': 
+        'Analyst Research':
             'https://www.sgx.com/research-education/analyst-research'
     }
 
@@ -120,8 +120,8 @@ class SgxMixin:
         await pscog.push_to_topic(self.topic, sendargs)
 
 
-    @staticmethod
-    def get_json_data(soup):
+    @classmethod
+    def get_json_data(cls, soup):
         """SGX stores page data in a json payload stashed in a <script> tag
 
         Their site app reads this data and renders to the page.
@@ -137,50 +137,80 @@ class SgxMixin:
         return json.loads(js)
 
 
-    @staticmethod
-    def read_page_data(page_data):
-        content = page_data['data']['route']['data']['data']
+    @classmethod
+    def read_page_data(cls, page_data):
+        """Parses the data from json into data for each post
 
+        Each month is extracted from the accordion and parsed into posts with
+        parse_accordion_month().
+
+        Structure (simplified):
+            - section
+                - author
+                - accordion
+                    - Feb 2020: post3, post4
+                    - Jan 2020: post1, post2
+        """
+        content = page_data['data']['route']['data']['data']
         # page_title = content['title']
 
         posts = []
         for section in content['widgets']:
+            # 1 section => 1 author => 1 accordion => multiple months
+            author = section['data']['title']  # Maybank Kim Eng Securities, etc
             accordion = section['data'].get('accordionItems')
+
             if not accordion:
                 continue
 
-            source = section['data']['title']  # Maybank Kim Eng Securities, etc
             posts = []
             for month in accordion:
-                # month['itemTitle'] => May 2020 etc
-                downloadables = [sec['downloadItems']
-                                 for sec in month['data']['widgets']
-                                 if 'downloadItems' in sec]
-                if not downloadables:
+                # Push each dlinfo in each month in output posts:
+                dlinfo = cls.parse_accordion_month(author, month)
+                if not dlinfo:
                     continue
-
-                # Flatten the structure of each downloadable entry
-                for dlable in downloadables:
-                    label = dlable['data']['label']
-                    dldata = dlable['data']['file']
-
-                    dldata['label'] = label
-                    dldata['source'] = source
-                    dldata['url'] = dldata['file']['data']['url']
-                    dldata['filemime'] = dldata['file']['data']['filemime']
-
-                    del dldata['file']
-
-                    # Sanity check
-                    try:
-                        keys = 'label source mediaType name date url filemime'
-                        assert all([k in dldata for k in keys.split()])
-                    except AssertionError:
-                        continue
-
-                    # Push each dldata in each month in the accordion:
-                    posts.append(dldata)
+                posts.append(dlinfo)
         return posts
+
+
+    @classmethod
+    def parse_accordion_month(cls, author, accordion_month):
+        """Extracts posts for each month in the accordion"""
+        # m_label = accordion_month['data']['itemTitle'] # => May 2020 etc
+        widgets = accordion_month['data']['widgets']
+        if not widgets:
+            return None
+
+        downloadables = []
+        for dl in widgets[0].get('data', {}).get('downloadItems', []):
+            dldata = dl.get('data')
+            if not dldata:
+                continue
+            if not dldata.get('label'):
+                continue
+            if not dldata.get('file'):
+                continue
+            downloadables.append(dldata)
+
+        if not downloadables:
+            return None
+
+        # Flatten the structure of each downloadable entry
+        for dldata in downloadables:
+            label = dldata['label']
+            dlinfo = dldata['file']['data']
+            dlinfo['url'] = dlinfo['file']['data']['url']
+            dlinfo['filemime'] = dlinfo['file']['data']['filemime']
+            dlinfo['label'] = label
+            dlinfo['author'] = author
+            # Sanity check
+            try:
+                keys = 'label author mediaType name date url filemime'
+                assert all([k in dlinfo for k in keys.split()])
+            except AssertionError:
+                continue
+
+        return dlinfo
 
 
     async def do_work(self) -> Sequence[SgxResearchPost]:
@@ -196,7 +226,7 @@ class SgxMixin:
             posts_data = self.read_page_data(page_data)
 
             # posts_data is a List[dict] each with these keys:
-            #   label source mediaType name date url filemime
+            #   label author mediaType name date url filemime
 
             for dldata in posts_data:
                 post = SgxResearchPost(dldata)
@@ -209,7 +239,8 @@ class SgxMixin:
         return True
 
 
-    def filtered(self,
+    @classmethod
+    def filtered(cls,
                  posts: Sequence[SgxResearchPost],
                  cutoff_secs: int = TRACKER_UPDATE_INTERVAL_SECS):
         new_posts = []

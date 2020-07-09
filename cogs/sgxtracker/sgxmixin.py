@@ -10,7 +10,6 @@ from discord import Embed
 
 TRACKER_UPDATE_INTERVAL_SECS = 30 * 60  # every 30 min
 
-
 log = logging.getLogger(__name__)
 
 
@@ -27,7 +26,8 @@ class SgxResearchPost:
 
     @property
     def articleid(self):
-        return f'{self.title}-{self.timestamp}'
+        unix_secs = int(self.timestamp.timestamp())
+        return f'{self.title}-{unix_secs}'
 
     @property
     def title(self):
@@ -54,8 +54,12 @@ class SgxResearchPost:
 
     @property
     def time_since_posted(self) -> datetime.timedelta:
-        timenow = datetime.datetime.now().astimezone(datetime.timezone.utc)
-        return timenow - self.timestamp
+        utc = datetime.timezone.utc
+        timenow = datetime.datetime.now().astimezone(utc)
+        timestamp = self.timestamp.astimezone(utc)
+        diff = timenow - timestamp
+        # print(self.articleid, diff)
+        return diff
 
     def to_embed(self, topic):
         try:
@@ -166,17 +170,17 @@ class SgxMixin:
             posts = []
             for month in accordion:
                 # Push each dlinfo in each month in output posts:
-                dlinfo = cls.parse_accordion_month(author, month)
-                if not dlinfo:
+                dlinfos = cls.parse_accordion_month(author, month)
+                if not dlinfos:
                     continue
-                posts.append(dlinfo)
+                posts.extend(dlinfos)
         return posts
 
 
     @classmethod
     def parse_accordion_month(cls, author, accordion_month):
         """Extracts posts for each month in the accordion"""
-        # m_label = accordion_month['data']['itemTitle'] # => May 2020 etc
+        m_label = accordion_month['data']['itemTitle'] # => May 2020 etc
         widgets = accordion_month['data']['widgets']
         if not widgets:
             return None
@@ -191,11 +195,11 @@ class SgxMixin:
             if not dldata.get('file'):
                 continue
             downloadables.append(dldata)
-
         if not downloadables:
             return None
 
         # Flatten the structure of each downloadable entry
+        posts = []
         for dldata in downloadables:
             label = dldata['label']
             dlinfo = dldata['file']['data']
@@ -209,8 +213,9 @@ class SgxMixin:
                 assert all([k in dlinfo for k in keys.split()])
             except AssertionError:
                 continue
+            posts.append(dlinfo)
 
-        return dlinfo
+        return posts
 
 
     async def do_work(self) -> Sequence[SgxResearchPost]:

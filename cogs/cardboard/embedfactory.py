@@ -144,6 +144,8 @@ def make_embed(post, img_url, tags_str, footer=True):
     embed.add_field(name='Links:', value=links_val, inline=False)
 
     if footer:
-        embed.set_footer(text='Matched against tag: ' + tags_str.split()[0])
+        match_tag = tags_str.split()[0]
+        count = get_tag_counts(match_tag)
+        embed.set_footer(text=f'Matched against tag: {match_tag} ({count})')
 
     return embed

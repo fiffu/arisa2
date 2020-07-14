@@ -149,7 +149,7 @@ async def assign_new_colour(member, action, retry=True):
             elif action in ['reroll', 'mutate']:
                 old = fmt.format(*role.colour.to_rgb())
                 msg = f"{action.title()} new colour {old} -> {new}"
-                log.info(msg + ' for %s', username)
+                # log.info(msg + ' for %s', username)
                 await role.edit(colour=newcol, reason=msg)
 
             else:
@@ -498,4 +498,4 @@ class Colours(DatabaseCogMixin, commands.Cog):
 
         await self.update_last('mutate', member.id, datetime.utcnow())
         rgbstr = 'rgb({}, {}, {})'.format(*newcol.to_rgb())
-        log.info('Updated mutate time -> %s for %s', rgbstr, str(member))
+        # log.info('Updated mutate time -> %s for %s', rgbstr, str(member))

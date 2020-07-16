@@ -167,9 +167,8 @@ class SgxMixin:
             if not accordion:
                 continue
 
-            posts = []
             for month in accordion:
-                # Push each dlinfo in each month in output posts:
+                # Extend output posts with dlinfos for each month
                 dlinfos = cls.parse_accordion_month(author, month)
                 if not dlinfos:
                     continue

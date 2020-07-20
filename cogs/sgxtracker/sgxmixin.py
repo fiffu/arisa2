@@ -94,6 +94,10 @@ class SgxMixin:
             'https://www.sgx.com/research-education/analyst-research'
     }
 
+    @property
+    def update_interval_secs(self) -> int:
+        return TRACKER_UPDATE_INTERVAL_SECS
+
     async def handle_new_posts(self, new_posts: Sequence[SgxResearchPost]):
         topic = self.topic
         pscog = self.pubsubcog

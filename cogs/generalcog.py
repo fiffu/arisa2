@@ -15,7 +15,7 @@ DEFAULT_ROLL_MODIFIER = -1
 
 GITHUB_LINK = 'https://github.com/fiffu/arisa2'
 
-BIRB = '<:birb:636038394945863691>'
+BIRB = '<:birb:715571534726430761>'
 
 class General(commands.Cog):
     """
@@ -70,6 +70,11 @@ class General(commands.Cog):
                 dice = dice or 1  # if `dice` not specified, take as 1
 
         res = dice * random.randint(1, sides) + mod
+
+        r = random.random
+        if r() < r() < r():
+            # super lucky!
+            res = ''.join(f'||{c}||' for c in str(res))
 
         plus = '+' if mod > 0 else ''
         formatted = '{D}d{S}{P}{M}'.format(

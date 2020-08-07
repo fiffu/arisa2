@@ -1,4 +1,5 @@
 from asyncio import sleep as asleep
+from datetime import datetime
 import logging
 import random
 import re
@@ -16,6 +17,25 @@ DEFAULT_ROLL_MODIFIER = -1
 GITHUB_LINK = 'https://github.com/fiffu/arisa2'
 
 BIRB = '<:birb:715571534726430761>'
+
+HOT_TIME = None
+HOT_TIME_DURATION_SECS = 30
+HOT_TIME_TRIGGER_CHANCE = 0.10
+HOT_TIME_BONUS = 1.0
+
+def get_hot_time_bonus():
+    def is_hot_time():
+        global HOT_TIME
+        if HOT_TIME:
+            elapsed = (datetime.now() - HOT_TIME).total_seconds()
+            return elapsed < HOT_TIME_DURATION_SECS
+        if random.random() < HOT_TIME_TRIGGER_CHANCE:
+            HOT_TIME = datetime.now()
+            log.info('HOT TIME NOW!!1')
+            return True
+        return False
+    return is_hot_time() * HOT_TIME_BONUS
+
 
 class General(commands.Cog):
     """
@@ -40,7 +60,7 @@ class General(commands.Cog):
         emb = Embed(title='GitHub · fiffu/arisa2',
                     description=(f'Bugs and suggestions: create an issue!\n'
                                  f'{GITHUB_LINK}/issues\n\n'
-                                 f'Contribtions: pull requests welcome!'
+                                 f'Contributions: pull requests welcome!'
                                  f'```git clone {GITHUB_LINK}.git```'),
                     #url=GITHUB_LINK,
                     colour=0x1e2327)
@@ -72,7 +92,7 @@ class General(commands.Cog):
         res = dice * random.randint(1, sides) + mod
 
         r = random.random
-        if r() < r() < r():
+        if r() < r() < (r() + get_hot_time_bonus()):
             # super lucky!
             res = ''.join(f'||{c}||' for c in str(res))
 

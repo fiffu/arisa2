@@ -134,15 +134,24 @@ class SgxMixin:
 
         Their site app reads this data and renders to the page.
         """
-        scripts = [
-            elem.text.strip() for elem in soup.find_all('script')
-            if len(elem.text) > 100000
-        ]
+        scripts = []
+        for script in map(str, soup.find_all('script')):
+            left = script.find('>') + 1
+            script = script[left:-9].strip()  # 9 == len('</script>')
+
+            if '.pdf' in script and 'download' in script:
+                scripts.append(script)
+
         if not scripts:
             return None
         script = scripts[0]
+
         js = script[len('window._sgxComApp_pageData = '):-1]  # -1 is trailing ;
-        return json.loads(js)
+        with open('lastdump.json', 'w', encoding='utf8') as f:
+            f.write(js)
+
+        obj = json.loads(js)
+        return obj
 
 
     @classmethod

@@ -178,12 +178,16 @@ class EmojiTools(DatabaseCogMixin, commands.Cog):
         emoji_ctr = Counter()
 
         # Push archived rows into counter object
-        for row in await self.db_query(query):
+        trimmed_rows = await self.db_query(query)
+        for row in trimmed_rows:
             ts = row['tstamp']
             # Use latest tstamp in batch as the tstamp for archive row
             if (not tstamp) or (ts > tstamp):
                 tstamp = ts
             emoji_ctr[row['emojistr']] += 1
+
+        # Update our tally of rows
+        self.rows_count -= len(trimmed_rows)
 
         # Get total count
         total_count = sum(emoji_ctr.values())

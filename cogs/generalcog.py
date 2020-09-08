@@ -101,6 +101,7 @@ class General(commands.Cog):
                 comment = grps['comment'].strip()
                 if comment:
                     author = ctx.message.author
+                    name = getattr(author, 'nick', author.name)
                     footer = f'{author.nick or author.name}: {comment}'
                 
                 has_arithmetic = any(

@@ -69,44 +69,63 @@ class General(commands.Cog):
     @commands.command()
     async def roll(self, ctx, *args):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""
-        def parseint(x):
+        def parseint(x, default=0):
             try:
-                return int(x or 0)
+                return int(x or default)
             except ValueError:
                 return x
 
-        repatt = (                      # !roll 3d5+10 check these dubs
-            r'(?P<dice>\d+(?=d))?'      #       3
-            r'[dD]?'                    #        d
-            r'(?P<sides>\d+)'           #         5
-            r'(?P<mod>\s?[-\+]\s?\d+)?' #          +10
-            r'(?P<comment>.*)'          #              check these dubs
+        repatt = (                       # !roll 3d5+10 check these dubs
+            r'(?P<dice>\d+(?=[dD]))?'    #       3
+            r'([Dd](?=\d))?'             #        d
+            r'(?P<sides>\d+)?'           #         5
+            r'(?P<mod>\s?[-\+]\s?\d+)?'  #          +10
+            r'(?P<comment>.*)'           #              check these dubs
         )
 
-        dice = DEFAULT_ROLL_DICE_COUNT
-        sides = DEFAULT_ROLL_SIDES
-        mod = DEFAULT_ROLL_MODIFIER
-        footer = ''
+        use_default_roll = True
+        dice, sides, mod = (DEFAULT_ROLL_DICE_COUNT,
+                            DEFAULT_ROLL_SIDES,
+                            DEFAULT_ROLL_MODIFIER)
+        footer = 'Syntax: !roll 1000, !roll 3d5+7, !roll 11d9 check em'
 
         match = None
         if args:
             args = ' '.join(args).strip()
             match = re.match(repatt, args)
 
-            if not match:
-                # If there was args but no match, offer a tip
-                footer = 'Syntax: !roll 1000, !roll 3d5+7, !roll 11d9 check em'
+            if match:
+                grps = match.groupdict()
+                await ctx.send(str(grps))
+                
+                # Unpack comment
+                comment = grps['comment'].strip()
+                if comment:
+                    author = ctx.message.author
+                    footer = f'{author.nick or author.name}: {comment}'
+                
+                has_arithmetic = any(
+                    map(lambda x: x != None, 
+                        [grps['dice'], grps['sides'], grps['mod']])
+                )
+                if has_arithmetic:
+                    use_default_roll = False
 
-            else:
-                # Unpack message into arithmetic inputs
-                *nums, comment = match.groups()
-                footer = comment.strip() or ''
-                dice, sides, mod = map(parseint, nums)
+                    # Unpack arithmetic
+                    # Sides is compulsory for a match
+                    sides = parseint(grps['sides'], 1)
 
-                # Check if it's too much work
-                if len(''.join(nums)) > 20:
-                    await ctx.send(f"That's just way too much work {BIRB}")
-                    return
+                    # mod defaults to 0
+                    mod = parseint(grps['mod'], 0)
+
+                    # dice should default to 1
+                    dice = parseint(grps['dice'], 1)
+
+
+        # Check if expression is too long (too much math)
+        if len(str(dice) + str(sides) + str(mod)) > 20:
+            await ctx.send(f"That's just way too much work {BIRB}")
+            return
 
         # Calc output
         res = dice * random.randint(1, sides) + mod
@@ -128,9 +147,8 @@ class General(commands.Cog):
             M=mod or ''
         )
 
-        if (dice, sides, mod) == (DEFAULT_ROLL_DICE_COUNT,
-                                  DEFAULT_ROLL_SIDES,
-                                  DEFAULT_ROLL_MODIFIER):
+        if use_default_roll:
+            # Assign to fallback formats
             formatted = '0-99'
 
         # Build embed and set comment or tip

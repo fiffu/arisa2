@@ -96,7 +96,6 @@ class General(commands.Cog):
 
             if match:
                 grps = match.groupdict()
-                await ctx.send(str(grps))
                 
                 # Unpack comment
                 comment = grps['comment'].strip()

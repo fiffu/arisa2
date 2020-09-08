@@ -11,3 +11,8 @@ def mash(text: str) -> str:
 
 def getabsdir(filepath):
     return os.path.abspath(os.path.dirname(filepath))
+
+def chunkify(it, chunk_size):
+    """Yields n-ples from iterable where n is chunk_size"""
+    for i in range(0, len(it), chunk_size):
+        yield it[i:i+chunk_size]

@@ -7,6 +7,7 @@ import re
 from discord import Embed
 from discord.ext import commands
 
+from utils import chunkify
 
 log = logging.getLogger(__name__)
 
@@ -23,18 +24,16 @@ HOT_TIME_DURATION_SECS = 30
 HOT_TIME_TRIGGER_CHANCE = 0.10
 HOT_TIME_BONUS = 1.0
 
-def get_hot_time_bonus():
-    def is_hot_time():
-        global HOT_TIME
-        if HOT_TIME:
-            elapsed = (datetime.now() - HOT_TIME).total_seconds()
-            return elapsed < HOT_TIME_DURATION_SECS
-        if random.random() < HOT_TIME_TRIGGER_CHANCE:
-            HOT_TIME = datetime.now()
-            log.info('HOT TIME NOW!!1')
-            return True
-        return False
-    return is_hot_time() * HOT_TIME_BONUS
+def is_hot_time():
+    global HOT_TIME
+    if HOT_TIME:
+        elapsed = (datetime.now() - HOT_TIME).total_seconds()
+        return elapsed < HOT_TIME_DURATION_SECS
+    if random.random() < HOT_TIME_TRIGGER_CHANCE:
+        HOT_TIME = datetime.now()
+        log.info('HOT TIME NOW!!1')
+        return True
+    return False
 
 
 class General(commands.Cog):
@@ -70,37 +69,65 @@ class General(commands.Cog):
     @commands.command()
     async def roll(self, ctx, *args):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""
-        repatt = r'(?P<dice>\d+(?=d))?[dD]?(?P<sides>\d+)(?P<mod>\s?[-\+]\s?\d+)?'
+        def parseint(x):
+            try:
+                return int(x or 0)
+            except ValueError:
+                return x
+
+        repatt = (                      # !roll 3d5+10 check these dubs
+            r'(?P<dice>\d+(?=d))?'      #       3
+            r'[dD]?'                    #        d
+            r'(?P<sides>\d+)'           #         5
+            r'(?P<mod>\s?[-\+]\s?\d+)?' #          +10
+            r'(?P<comment>.*)'          #              check these dubs
+        )
 
         dice = DEFAULT_ROLL_DICE_COUNT
         sides = DEFAULT_ROLL_SIDES
         mod = DEFAULT_ROLL_MODIFIER
+        footer = ''
 
         match = None
         if args:
-            args = ' '.join(args)
-            if len(args) > 30:
-                await ctx.send(f"That's just way too much work {BIRB}")
-                return
-
+            args = ' '.join(args).strip()
             match = re.match(repatt, args)
-            if match:
-                grps = [x or 0 for x in match.groups()]
-                dice, sides, mod = map(int, grps)
-                dice = dice or 1  # if `dice` not specified, take as 1
 
+            if not match:
+                # If there was args but no match, offer a tip
+                footer = 'Syntax: !roll 1000, !roll 3d5+7, !roll 11d9 check em'
+
+            else:
+                # Unpack message into arithmetic inputs
+                *nums, comment = match.groups()
+                footer = comment.strip() or ''
+                dice, sides, mod = map(parseint, nums)
+                
+                # Check if it's too much work
+                if len(''.join(nums)) > 20:
+                    await ctx.send(f"That's just way too much work {BIRB}")
+                    return
+
+            else:
+                
+
+        # Calc output
         res = dice * random.randint(1, sides) + mod
 
-        r = random.random
-        if r() < r() < (r() + get_hot_time_bonus()):
-            # super lucky!
-            res = ''.join(f'||{c}||' for c in str(res))
+        # Format output
+        if is_hot_time():
+            # suppose res == 12345; transform to '||12||||34||||5||'
+            bigrammed = lambda s: chunkify(s, 2)
+            res = ''.join(
+                f'||{pair}||' 
+                for pair in bigrammed(str(res))
+            )
 
-        plus = '+' if mod > 0 else ''
+        # Format input into algebraic notation or 0-99
         formatted = '{D}d{S}{P}{M}'.format(
             D='' if dice == 1 else dice,
-            S=sides,
-            P=plus,
+            S=sides or 0,
+            P=('+' if mod > 0 else '-') if mod else '',
             M=mod or ''
         )
 
@@ -109,10 +136,10 @@ class General(commands.Cog):
                                   DEFAULT_ROLL_MODIFIER):
             formatted = '0-99'
 
+        # Build embed and set comment or tip
         emb = Embed(description=f"Rolling {formatted}: **{res}**")
-
-        if args and not match:
-            emb.set_footer(text='Syntax: !roll, !roll 2, !roll d12, !roll 3d5+7')
+        if footer:
+            emb.set_footer(text=footer)
 
         await ctx.send(embed=emb)
 

@@ -112,7 +112,7 @@ class General(commands.Cog):
         emb = Embed(description=f"Rolling {formatted}: **{res}**")
 
         if args and not match:
-            emb.set_footer('Syntax: !roll, !roll 2, !roll d12, !roll 3d5+7')
+            emb.set_footer(text='Syntax: !roll, !roll 2, !roll d12, !roll 3d5+7')
 
         await ctx.send(embed=emb)
 

@@ -102,14 +102,11 @@ class General(commands.Cog):
                 *nums, comment = match.groups()
                 footer = comment.strip() or ''
                 dice, sides, mod = map(parseint, nums)
-                
+
                 # Check if it's too much work
                 if len(''.join(nums)) > 20:
                     await ctx.send(f"That's just way too much work {BIRB}")
                     return
-
-            else:
-                
 
         # Calc output
         res = dice * random.randint(1, sides) + mod
@@ -119,7 +116,7 @@ class General(commands.Cog):
             # suppose res == 12345; transform to '||12||||34||||5||'
             bigrammed = lambda s: chunkify(s, 2)
             res = ''.join(
-                f'||{pair}||' 
+                f'||{pair}||'
                 for pair in bigrammed(str(res))
             )
 

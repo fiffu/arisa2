@@ -25,7 +25,8 @@ ALIASES = {
 
 VETO = (
     'prinz',
-    'cecilia'
+    'cecilia',
+    'aaaaa',
 )
 
 

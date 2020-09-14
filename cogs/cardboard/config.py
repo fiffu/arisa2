@@ -19,7 +19,7 @@ ALIASES = {
     ,"annette_(king's_raid)":
         ['annette']
     ,'clarisse_(granblue_fantasy)':
-        ['dokkan'],
+        ['dokkan']
     ,'aaaa_(quad-a)':
         ['aaaa'],
 }

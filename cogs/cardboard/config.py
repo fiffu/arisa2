@@ -50,6 +50,8 @@ FLOATS = (
 
 
 EXCLUDE_POSTS_TAGGED_WITH = (
+    'bara',
+    'yaoi',
     'comic',
 )
 

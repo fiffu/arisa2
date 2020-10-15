@@ -23,6 +23,7 @@ from .publishsubscribecog import PublishSubscribe
 from .stovetracker.epicsevencog import StoveEpicSeven
 from .tracking.twitchcog import TwitchMogra
 from .sgxtracker.sgxresearchcog import SgxResearch
+from .mhybbstracker.mhybbscog import MhyBbs
 
 
 
@@ -47,4 +48,5 @@ ENABLED_COGS = [
     StoveEpicSeven,
     TwitchMogra,
     SgxResearch,
+    MhyBbs,
 ]

@@ -13,7 +13,7 @@ from cogs.tracking.config import TRACKER_UPDATE_INTERVAL_SECS
 
 log = logging.getLogger(__name__)
 
-TRACKER_UPDATE_INTERVAL_SECS = 3 * 24 * 60 * 60
+# TRACKER_UPDATE_INTERVAL_SECS = 3 * 24 * 60 * 60
 
 class MhyBbsPost:
     URL_STUB = 'https://bbs.mihoyo.com/ys/article/'

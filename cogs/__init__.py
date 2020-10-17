@@ -43,10 +43,10 @@ ENABLED_COGS = [
     KrSearch,
 
     PlugKingsRaid,
-    PlugBrownDust,
+    # PlugBrownDust,
     PublishSubscribe,
     StoveEpicSeven,
-    TwitchMogra,
+    # TwitchMogra,
     SgxResearch,
     MhyBbs,
 ]

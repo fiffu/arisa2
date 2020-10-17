@@ -20,9 +20,13 @@ if __name__ == '__main__':
 
     # Setup logging to console
     stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(
-        logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     stdout_handler.setLevel(logging.INFO)
+
+    # Timestamp already available on Heroku logstream
+    timestamp = '%(asctime)s:' if DEBUGGING else ''
+    log_format = timestamp + '%(levelname)s:%(name)s: %(message)s'
+    stdout_handler.setFormatter(logging.Formatter(log_format))
+
     logger.addHandler(stdout_handler)
 
     prefix = appconfig.fetch('BOT', 'COMMAND_PREFIX')

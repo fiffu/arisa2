@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class DebugCog(commands.Cog):
     """
-    Cog that defines bot.on_ready behaviour
+    Implements tracing, visibility and debugging commands
     """
 
     def __init__(self, bot):
@@ -28,33 +28,31 @@ class DebugCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        try:
-            raise error
+        cog = ctx.cog or self.__class__.__name__
+        cls = error.__class__.__name__
+        msg = str(error)
 
-        finally:
-            cls = error.__class__.__name__
-            msg = str(error)
+        log.error('(%s - %s: %s) %s: %s',
+                  cog, cls, msg, str(ctx.author), ctx.message.content)
 
-            log.error('%s: %s | cog: %s, author: %s, text: %s',
-                      cls, msg, ctx.cog, str(ctx.author), ctx.message.content)
+        if not DEBUGGING:
+            return
 
-            tb = traceback.format_exc()
-            log.error(f'%s: %s', cls, tb)
+        tb = ''.join(traceback.format_exception(
+            type(error), error, error.__traceback__))
+        log.info(f'%s: %s', cls, tb)
 
-            if not DEBUGGING:
-                return
+        msg = f'**{cls}**: {msg} ```\n{tb}```'
+        await ctx.send(content=msg)
 
-            msg = f'{cls}: {msg}```\n{tb}```'
-            await ctx.send(content=msg)
+        if self.halting:
+            await ctx.send(content='App halting.')
+        else:
+            await ctx.send(content='App skipped halting.')
+            return
 
-            if self.halting:
-                await ctx.send(content='App halting.')
-            else:
-                await ctx.send(content='App skipped halting.')
-                return
-
-            log.critical(f'Halting due to command error...')
-            await self.bot.close()
+        log.critical(f'Halting due to command error...')
+        await self.bot.close()
 
 
     async def sethalt(self, boolean):

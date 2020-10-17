@@ -56,7 +56,6 @@ class MhyBbsPost:
     @property
     def timestamp(self) -> datetime:
         timestamp = int(self.json['post']['created_at'])
-        timestamp -= 60 * 60 * 8  # their timestamp is in UTC+8 so drop 8 hours
         return datetime.fromtimestamp(timestamp).astimezone(timezone.utc)
 
 

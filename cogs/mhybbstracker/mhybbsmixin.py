@@ -9,17 +9,21 @@ from typing import Sequence
 from discord import Embed
 
 from cogs.tracking.config import TRACKER_UPDATE_INTERVAL_SECS
+from translation import translate
+
+from .glossary import TRANSLATION_GLOSSARY
 
 
 log = logging.getLogger(__name__)
 
-# TRACKER_UPDATE_INTERVAL_SECS = 3 * 24 * 60 * 60
+# TRACKER_UPDATE_INTERVAL_SECS = 24 * 60 * 60
 
 class MhyBbsPost:
     URL_STUB = 'https://bbs.mihoyo.com/ys/article/'
 
     def __init__(self, post_json):
         self.json = post_json
+        self._cache = {}
 
 
     @property
@@ -68,7 +72,13 @@ class MhyBbsPost:
     @property
     def description(self):
         """Not used but could be useful"""
-        return self.json['post']['content']
+        # blurb = self.json['post']['content']
+        if 'description' not in self._cache:
+            title_trans = translate(self.title,
+                                    src='zh-cn', dest='en',
+                                    replacements=TRANSLATION_GLOSSARY)
+            self._cache['description'] = title_trans
+        return self._cache['description']
 
 
     def to_embed(self, topic):
@@ -79,7 +89,7 @@ class MhyBbsPost:
                     'title',
                     'url',
                     'timestamp',
-                    # 'description',
+                    'description',
                 )
             }
 

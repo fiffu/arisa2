@@ -11,6 +11,7 @@ parsedatetime = "*"
 aiopg = "*"
 "psycopg2" = "*"
 selenium = "*"
+googletrans = "*"
 
 [dev-packages]
 

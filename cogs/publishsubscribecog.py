@@ -127,7 +127,7 @@ class PublishSubscribe(DatabaseCogMixin, commands.Cog):
                 except DiscordException as e:
                     args = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
                     msg = f'failed send({args}) to channel: {cname} id: {cid}'
-                    log.exception(msg)
+                    log.error(msg)
 
 
     async def subscribe(self,

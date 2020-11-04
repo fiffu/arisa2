@@ -210,8 +210,9 @@ class YahooFinanceMixin:
         return TRACKER_UPDATE_INTERVAL_MINS * 60
 
 
-    def is_time_to_update(self, wiggle_mins=WIGGLE_ROOM_MINS):
-        """If wiggle_mins == 5, returns true between [2355, 0005] inclusive
+    def is_time_to_update(self, h_hour=20, wiggle_mins=WIGGLE_ROOM_MINS):
+        """If wiggle == 5, returns true between [(hour-1)55, (hour)05] inclusive
+        Hour should be in the range [0, 23] inclusive.
 
         Generally wiggle_mins should be less than half of update_interval_secs
         """
@@ -221,13 +222,17 @@ class YahooFinanceMixin:
         sg_now_dt = datetime.fromtimestamp(sg_now)
         wkday, hour, minute = map(int, sg_now_dt.strftime('%w %H %M').split())
 
+        h = h_hour % 24
+
         if wkday not in {1: 'Mon', 3: 'Wed', 5: 'Fri'}:
             return False
 
-        if hour == 17 and minute >= (60 - wiggle):
+        if hour == (h - 1) and minute >= (60 - wiggle):
+            # if H-hour is 2000, check if time is >= (2000 - wiggle)
             return True
 
-        if hour == 18 and minute <= wiggle:
+        if hour == h and minute <= wiggle:
+            # If time is <= (2000 + wiggle)
             return True
 
         return False

@@ -24,7 +24,7 @@ from .stovetracker.epicsevencog import StoveEpicSeven
 from .tracking.twitchcog import TwitchMogra
 from .sgxtracker.sgxresearchcog import SgxResearch
 from .mhybbstracker.mhybbscog import MhyBbs
-
+from .yahoofinance.cog import Stonks
 
 
 log = logging.getLogger(__name__)
@@ -49,4 +49,6 @@ ENABLED_COGS = [
     # TwitchMogra,
     SgxResearch,
     MhyBbs,
+
+    Stonks,
 ]

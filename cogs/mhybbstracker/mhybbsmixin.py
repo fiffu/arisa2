@@ -4,6 +4,7 @@ TODO: add machine translations for the post titles
 
 from datetime import datetime, timedelta, timezone
 import logging
+from types import SimpleNamespace
 from typing import Sequence
 
 from discord import Embed
@@ -16,14 +17,33 @@ from .glossary import TRANSLATION_GLOSSARY
 
 log = logging.getLogger(__name__)
 
+Lang = SimpleNamespace(EN='en', ZH='zh')
+
 # TRACKER_UPDATE_INTERVAL_SECS = 24 * 60 * 60
 
 class MhyBbsPost:
-    URL_STUB = 'https://bbs.mihoyo.com/ys/article/'
+    ARTICLE_STUB = {
+        Lang.ZH: 'https://bbs.mihoyo.com/ys/article/',
+        Lang.EN: 'https://forums.mihoyo.com/genshin/article/',
+    }
+    USER_STUB = {
+        Lang.ZH: 'https://bbs.mihoyo.com/ys/accountCenter/postList?id=',
+        Lang.EN: 'https://forums.mihoyo.com/genshin/accountCenter/postList?id=',
+    }
 
     def __init__(self, post_json):
         self.json = post_json
         self._cache = {}
+
+
+    @property
+    def language(self):
+        default = Lang.EN
+        forum = self.json['forum']['name']
+        return {
+            '官方': Lang.ZH,
+            'Official': Lang.EN,
+        }.get('forum', default)
 
 
     @property
@@ -38,21 +58,24 @@ class MhyBbsPost:
 
     @property
     def url(self):
-        return self.URL_STUB + self.articleid
+        stub = self.ARTICLE_STUB.get(self.language)
+        return (stub + self.articleid) if stub else None
 
 
     @property
     def image_url(self):
+        if not self.json['image_list']:
+            return None
         return self.json['image_list'][0]['url']
 
 
     @property
     def author(self):
         user = self.json['user']
-        user_url = 'https://bbs.mihoyo.com/ys/accountCenter/postList?id={}'
+        url = self.USER_STUB.get(self.language)
         return {
             'name': user['nickname'],
-            'url': user_url.format(user['uid']),
+            'url': (url + user['uid']) if url else None,
             'icon_url': user['avatar_url'],
         }
 
@@ -71,13 +94,18 @@ class MhyBbsPost:
 
     @property
     def description(self):
-        """Not used but could be useful"""
-        # blurb = self.json['post']['content']
-        if 'description' not in self._cache:
+        if 'description' in self._cache:
+            self._cache['description']
+
+        if self.language == Lang.ZH:
             title_trans = translate(self.title,
                                     src='zh-cn', dest='en',
                                     replacements=TRANSLATION_GLOSSARY)
             self._cache['description'] = title_trans
+
+        else:
+            self._cache['description'] = None
+
         return self._cache['description']
 
 

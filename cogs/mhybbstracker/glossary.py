@@ -27,4 +27,11 @@ TRANSLATION_GLOSSARY = [
     ('凝光', 'Ningguang'),
     ('神里绫华', 'Kamisato Ayaka'),
     ('绫华', 'Ayaka'),
+
+    # 1.1
+    ('达达利亚', 'Tartaglia'),
+    ('钟离', 'Zhongli'),
+    ('迪奥娜', 'Diona'),
+    ('辛焱', 'Xinyan'),
+
 ]

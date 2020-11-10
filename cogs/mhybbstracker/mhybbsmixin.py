@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 Lang = SimpleNamespace(EN='en', ZH='zh')
 
-# TRACKER_UPDATE_INTERVAL_SECS = 24 * 60 * 60
+# TRACKER_UPDATE_INTERVAL_SECS = 12 * 60 * 60
 
 class MhyBbsPost:
     ARTICLE_STUB = {
@@ -43,7 +43,7 @@ class MhyBbsPost:
         return {
             '官方': Lang.ZH,
             'Official': Lang.EN,
-        }.get('forum', default)
+        }.get(forum, default)
 
 
     @property
@@ -95,7 +95,7 @@ class MhyBbsPost:
     @property
     def description(self):
         if 'description' in self._cache:
-            self._cache['description']
+            return self._cache['description']
 
         if self.language == Lang.ZH:
             title_trans = translate(self.title,

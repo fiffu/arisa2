@@ -12,7 +12,7 @@ URLS = {
     '西风快报员': 'https://api-takumi.mihoyo.com/post/wapi/userPost?gids=2&size=20&uid=75276539',
     '原神米游姬': 'https://api-takumi.mihoyo.com/post/wapi/userPost?gids=2&size=20&uid=75276550',
     'en_events': 'https://api-os-takumi.mihoyo.com/community/post/wapi/getNewsList?gids=2&page_size=20&type=2',
-    'en_info': 'https://api-os-takumi.mihoyo.com/community/post/wapi/getNewsList?gids=2&page_size=10&type=3',
+    # 'en_info': 'https://api-os-takumi.mihoyo.com/community/post/wapi/getNewsList?gids=2&page_size=10&type=3',
 }
 
 

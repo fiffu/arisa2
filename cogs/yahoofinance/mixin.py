@@ -122,7 +122,7 @@ class TickerToday:
     def description(self):
         close_quote = self.on_close['quote']
         open_quote = self.on_open['quote']
-        desc = f"__**{thousands(rounded(close_quote))}**__"
+        desc = f"Closed at __**{thousands(rounded(close_quote))}**__"
 
         diff = self._diff
         if diff:
@@ -130,7 +130,7 @@ class TickerToday:
             sign = self.by_direction('-', None, '+')
             diffstr = rounded(abs(diff))
             diff_pct = rounded(abs(diff) / open_quote * 100, places=2)
-            desc = f'{desc} {arrow}{Unicode.EN_SPACE}{sign}{diffstr} ({sign}{diff_pct}%)'
+            desc += f' {arrow}{Unicode.EN_SPACE}{sign}{diffstr} ({sign}{diff_pct}%)'
 
         return desc
 
@@ -191,6 +191,31 @@ class TickerToday:
         except Exception as e:
             log.exception(e)
             raise e
+
+    def to_string(self):
+        templ = '{sign}  {symbol} {arrow} {price}'
+        templ_diff = '   {sign}{diffstr} ({sign}{diff_pct}%)'
+
+        sign, arrow = [
+            self.by_direction(*options) for options in [
+                ('-', Unicode.DOT, '+'),
+                (Unicode.ARROW_DOWN, ' ', Unicode.ARROW_UP)
+            ]
+        ]
+
+        symbol = self.symbol.upper()
+
+        open_quote = self.on_open['quote']
+        close_quote = self.on_close['quote']
+        price = thousands(rounded(close_quote))
+
+        diff = self._diff
+        if diff:
+            diffstr = rounded(abs(diff))
+            diff_pct = rounded(abs(diff) / open_quote * 100, places=2)
+            templ += templ_diff
+
+        return templ.format(**locals())
 
 
     def __repr__(self):
@@ -266,9 +291,9 @@ class YahooFinanceMixin:
 
         log.info('%s new ticker updates for topic "%s"', len(updates), topic)
 
+        tickers = updates.values()
         sendargs = [
-            dict(content=None, embed=ticker.to_embed(self.topic))
-            for ticker in updates.values()
+            dict(content=None, embed=self.compose_summary(tickers))
         ]
         await pscog.push_to_topic(self.topic, sendargs)
 
@@ -381,3 +406,14 @@ class YahooFinanceMixin:
 
         return {symbol: json
                 for symbol, json in zip(self.symbols, resps)}
+
+
+    def compose_summary(self, tickers):
+        width = max(len(t.name) for t in tickers)
+        rows = []
+        for t in tickers:
+            name = f'[{t.name}]({t.url})'
+            desc = t.to_string()
+            rows.append(f'**{name}** ```diff\n{desc}```')
+        desc = '\n'.join(rows)
+        return Embed(description=desc)

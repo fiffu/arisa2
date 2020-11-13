@@ -68,19 +68,18 @@ class General(commands.Cog):
     @commands.command()
     async def pokies(self, ctx, *args):
         # Get all custom Emoji from server
-        allEmotes = self.bot.emojis
-        # Get a random index for each emoji
-        index1, index2, index3 = random.sample(range(0, len(allEmotes)-1), 3)
-        emote1 = str(allEmotes[index1])
-        emote2 = str(allEmotes[index2])
-        emote3 = str(allEmotes[index3])
+        all_emotes = ctx.guild.emojis
         
+        # Set up anonymous function and get emoji
+        choose = lambda: random.choice(all_emotes)
+        e1, e2, e3 = choose(), choose(), choose()
+
         # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
         # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
-        # Alternatively the indices can be compared directly (since they are just integers)
+
         async with ctx.typing():
             await asleep(1)
-            reply = emote1 + " " + emote2 + " " + emote3
+            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
             await ctx.send(content=reply)
             
     @commands.command()

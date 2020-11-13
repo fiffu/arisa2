@@ -65,7 +65,23 @@ class General(commands.Cog):
                     colour=0x1e2327)
         await ctx.send(embed=emb)
 
+    @commands.command()
+    async def pokies(self, ctx, *args):
+        # Get all custom Emoji from server
+        all_emotes = ctx.guild.emojis
+        
+        # Set up anonymous function and get emoji
+        choose = lambda: random.choice(all_emotes)
+        e1, e2, e3 = choose(), choose(), choose()
 
+        # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
+        # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
+
+        async with ctx.typing():
+            await asleep(1)
+            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
+            await ctx.send(content=reply)
+            
     @commands.command()
     async def roll(self, ctx, *args):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""

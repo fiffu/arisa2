@@ -65,7 +65,24 @@ class General(commands.Cog):
                     colour=0x1e2327)
         await ctx.send(embed=emb)
 
-
+    @commands.command()
+    async def pokies(self, ctx, *args):
+        # Get all custom Emoji from server
+        allEmotes = self.bot.emojis
+        # Get a random index for each emoji
+        index1, index2, index3 = random.sample(range(0, len(allEmotes)-1), 3)
+        emote1 = str(allEmotes[index1])
+        emote2 = str(allEmotes[index2])
+        emote3 = str(allEmotes[index3])
+        
+        # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
+        # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
+        # Alternatively the indices can be compared directly (since they are just integers)
+        async with ctx.typing():
+            await asleep(1)
+            reply = emote1 + "" + emote2 + "" + emote3
+            await ctx.send(content=reply)
+            
     @commands.command()
     async def roll(self, ctx, *args):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""

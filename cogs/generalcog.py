@@ -80,7 +80,7 @@ class General(commands.Cog):
         # Alternatively the indices can be compared directly (since they are just integers)
         async with ctx.typing():
             await asleep(1)
-            reply = emote1 + "" + emote2 + "" + emote3
+            reply = emote1 + " " + emote2 + " " + emote3
             await ctx.send(content=reply)
             
     @commands.command()

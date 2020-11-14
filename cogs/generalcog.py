@@ -65,7 +65,6 @@ class General(commands.Cog):
                     colour=0x1e2327)
         await ctx.send(embed=emb)
 
-
     @commands.command()
     async def pokies(self, ctx, *args):
         # Get all custom Emoji from server
@@ -77,19 +76,12 @@ class General(commands.Cog):
 
         # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
         # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
-        reply = Embed(description='{} {} {}'.format(str(e1), str(e2), str(e3)))
-
-        if args:
-            author = ctx.message.author
-            name = getattr(author, 'nick', author.name)
-            comment = ' '.join(args)
-            reply.set_footer(f'{name}: {comment}')
 
         async with ctx.typing():
             await asleep(1)
-            await ctx.send(embed=reply)
-
-
+            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
+            await ctx.send(content=reply)
+            
     @commands.command()
     async def roll(self, ctx, *args):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""
@@ -126,7 +118,7 @@ class General(commands.Cog):
                 if comment:
                     author = ctx.message.author
                     name = getattr(author, 'nick', author.name)
-                    footer = f'{name}: {comment}'
+                    footer = f'{author.nick or author.name}: {comment}'
                 
                 has_arithmetic = any(
                     map(lambda x: x != None, 

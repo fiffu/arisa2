@@ -83,7 +83,7 @@ class General(commands.Cog):
             author = ctx.message.author
             name = getattr(author, 'nick', author.name)
             comment = ' '.join(args)
-            reply.set_footer(f'{name}: {comment}')
+            reply.set_footer(text=f'{name}: {comment}')
 
         async with ctx.typing():
             await asleep(1)

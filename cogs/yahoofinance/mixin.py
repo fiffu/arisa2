@@ -249,8 +249,8 @@ class YahooFinanceMixin:
 
         h = h_hour % 24
 
-        # if wkday not in {1: 'Mon', 3: 'Wed', 5: 'Fri'}:
-        #     return False
+        if wkday in {6: 'Sat', 7: 'Sun'}:
+            return False
 
         if hour == (h - 1) and minute >= (60 - wiggle):
             # if H-hour is 2000, check if time is >= (2000 - wiggle)

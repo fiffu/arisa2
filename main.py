@@ -42,7 +42,7 @@ if __name__ == '__main__':
             cog = cog_cls(bot)  # instantiate cog class
             bot.add_cog(cog)
             num_cogs_loaded += 1
-            logger.info('Registered cog %s', cog.qualified_name)
+            # logger.info('Registered cog %s', cog.qualified_name)
 
         except commands.CommandError as e:
             logger.error('Failed to load cog: %s.%s',

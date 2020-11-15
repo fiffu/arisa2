@@ -249,7 +249,7 @@ class YahooFinanceMixin:
 
         h = h_hour % 24
 
-        if wkday in {6: 'Sat', 7: 'Sun'}:
+        if wkday in {6: 'Sat', 0: 'Sun'}:
             return False
 
         if hour == (h - 1) and minute >= (60 - wiggle):

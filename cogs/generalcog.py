@@ -144,7 +144,7 @@ class General(commands.Cog):
             return
 
         # Calc output
-        res = dice * random.randint(1, sides) + mod
+        res = sum(random.randint(1, sides) + mod for _ in range(dice))
 
         # Format output
         if is_hot_time():

@@ -15,8 +15,7 @@ RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RE
 
 RUN CHROME_SETUP=google-chrome.deb \
     && wget -O $CHROME_SETUP "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
-    && dpkg -i $CHROME_SETUP \
-    & apt-get install -y -f \
+    && apt-get install -y -f $CHROME_SETUP \
     && rm $CHROME_SETUP
 
 

@@ -14,7 +14,9 @@ RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RE
     && rm chromedriver_linux64.zip
 
 # Chrome deps
-RUN apt-get -y install gconf-service libappindicator1 libasound2 \
+RUN apt-get update
+RUN apt-get -y install \
+        gconf-service libappindicator1 libasound2 \
         libatk1.0-0 libatk-bridge2.0-0 libcairo-gobject2 \
         libdrm2 libgbm1 libgconf-2-4 libgtk-3-0 libnspr4 libnss3 \
         libx11-xcb1 libxcb-dri3-0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 \

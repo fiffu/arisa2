@@ -1,8 +1,9 @@
 FROM python:3.6
 
-RUN export CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`
-RUN export GOOGLE_CHROME_BIN=/usr/bin/chromedriver
+ENV CHROMEDRIVER_VERSION `curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`
+ENV GOOGLE_CHROME_BIN /usr/bin/chromedriver
 
+RUN echo ${CHROMEDRIVER_VERSION} ${GOOGLE_CHROME_BIN}
 
 # Install chromedriver and google-chrome
 RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` \

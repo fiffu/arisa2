@@ -24,7 +24,7 @@ RUN apt-get -y install \
         fonts-liberation
 # Chrome
 RUN CHROME_SETUP=./google-chrome.deb \
-    && curl -O $CHROME_SETUP "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+    && wget -O $CHROME_SETUP "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
     && apt-get install -y -f $CHROME_SETUP \
     && rm $CHROME_SETUP
 

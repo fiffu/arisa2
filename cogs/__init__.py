@@ -21,7 +21,7 @@ from .plugtracker.kingsraidcog import PlugKingsRaid
 from .plugtracker.browndustcog import PlugBrownDust
 from .publishsubscribecog import PublishSubscribe
 from .stovetracker.epicsevencog import StoveEpicSeven
-from .tracking.twitchcog import TwitchMogra
+# from .tracking.twitchcog import TwitchMogra
 from .sgxtracker.sgxresearchcog import SgxResearch
 from .mhybbstracker.mhybbscog import MhyBbs
 from .yahoofinance.cog import Stonks

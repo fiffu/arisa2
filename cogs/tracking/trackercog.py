@@ -192,15 +192,14 @@ class SeleniumTrackerCog(TrackerCog):
 
         driveroptions = webdriver.chrome.options.Options()
         driveroptions.add_argument('--headless')
-        # driveroptions.binary_location = CHROME_BINARY_PATH
+        driveroptions.add_argument('--disable-gpu')
+        driveroptions.add_argument('--no-sandbox')    
 
         exe_location = CHROME_BINARY_PATH
         if '/app/.apt/' in appconfig.from_env('PATH'):
             # Using options given in by Heroku's Chrome buildpack
             # https://github.com/heroku/heroku-buildpack-google-chrome
             exe_location = 'chromedriver'
-            # driveroptions.add_argument('--disable-gpu')
-            # driveroptions.add_argument('--no-sandbox')
             # driveroptions.add_argument('--remote-debugging-port=9222')
 
         log.info('Setting up driver with location: %s', exe_location)

@@ -13,8 +13,8 @@ from .generalcog import General
 from .interceptor.cog import Interceptor
 
 # Game-specific
-from .epicseven.cog import EpicSeven
-from .kingsraid.cog import KrSearch
+# from .epicseven.cog import EpicSeven
+# from .kingsraid.cog import KrSearch
 
 # Automated site tracking service
 from .plugtracker.kingsraidcog import PlugKingsRaid
@@ -39,8 +39,8 @@ ENABLED_COGS = [
     General,
     Interceptor,
 
-    EpicSeven,
-    KrSearch,
+    # EpicSeven,
+    # KrSearch,
 
     PlugKingsRaid,
     # PlugBrownDust,

@@ -38,6 +38,9 @@ def fetch(section, option=None, check_env=True, cast_to=None):
 
     value = sec.get(option) or env
 
+    if not value:
+        raise ValueError(f'missing config value: {section} {option}')
+
     if value.isnumeric():
         value = float(value)
 

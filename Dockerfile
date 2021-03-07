@@ -39,4 +39,4 @@ WORKDIR /arisa2
 RUN pip install pipenv \
     && pipenv install --deploy --system --ignore-pipfile
 
-RUN ["python3", "main.py"]
+CMD ["python3", "main.py"]

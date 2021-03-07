@@ -13,15 +13,15 @@ from .generalcog import General
 from .interceptor.cog import Interceptor
 
 # Game-specific
-from .epicseven.cog import EpicSeven
-from .kingsraid.cog import KrSearch
+# from .epicseven.cog import EpicSeven
+# from .kingsraid.cog import KrSearch
 
 # Automated site tracking service
 from .plugtracker.kingsraidcog import PlugKingsRaid
 from .plugtracker.browndustcog import PlugBrownDust
 from .publishsubscribecog import PublishSubscribe
 from .stovetracker.epicsevencog import StoveEpicSeven
-from .tracking.twitchcog import TwitchMogra
+# from .tracking.twitchcog import TwitchMogra
 from .sgxtracker.sgxresearchcog import SgxResearch
 from .mhybbstracker.mhybbscog import MhyBbs
 from .yahoofinance.cog import Stonks
@@ -39,8 +39,8 @@ ENABLED_COGS = [
     General,
     Interceptor,
 
-    EpicSeven,
-    KrSearch,
+    # EpicSeven,
+    # KrSearch,
 
     PlugKingsRaid,
     # PlugBrownDust,

@@ -9,6 +9,8 @@ arisa2 is a major rewrite of the original [Arisa](https://arisa-chan.herokuapp.c
 
 Arisa is designed to run for free on [Heroku](https://heroku.com/), with the PostgreSQL addon. We use [aiopg](https://pypi.org/project/aiopg/) database bindings, essentially an async wrapper over [psycopg2](https://pypi.org/project/psycopg2/).
 
+Alternatively, Arisa also runs on Docker using the provided `Dockerfile`. Efforts to convert this into a docker-compose file with attached PostgreSQL DB are ongoing.
+
 Arisa's business logic is implemented with modular [cogs](https://discordpy.readthedocs.io/en/latest/ext/commands/cogs.html), which are loaded selectively at startup. As the use-case is for a guild playing multiple flavour-of-the-month games, cogs allow us to write features targeting a specific game, which can be left unloaded later on.
 
 We have some cog mixins that implement 'middleware' services, for example DatabaseCog providing idiomatic database access. These should be inherited along with `discord.ext.commands.Cog` when such services are required. Some mixins provide interfaces with web-scraping engines, forming the backbone for the website update tracker. We use [aiohttp](https://pypi.org/project/aiohttp/) for static pages and [Selenium](https://pypi.org/project/selenium/) for dynamic/JS-rendered sites. See the separate readme for setting up the browser drivers and bindings for Selenium.

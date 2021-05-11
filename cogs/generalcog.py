@@ -17,7 +17,7 @@ DEFAULT_ROLL_MODIFIER = -1
 
 GITHUB_LINK = 'https://github.com/fiffu/arisa2'
 
-BIRB = '<:birb:715571534726430761>'
+BIRB = '<:birb:841723361289568337>'
 
 HOT_TIME = None
 HOT_TIME_DURATION_SECS = 30

@@ -12,6 +12,7 @@ aiopg = "*"
 "psycopg2" = "*"
 selenium = "*"
 googletrans = "*"
+aiohttp = "*"
 
 [dev-packages]
 

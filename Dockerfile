@@ -28,9 +28,10 @@ RUN CHROME_SETUP=./google-chrome.deb \
     && apt-get install -y -f $CHROME_SETUP \
     && rm $CHROME_SETUP
 
+RUN mkdir /arisa2
+WORKDIR /arisa2
 ADD ./Pipfile /arisa2
 ADD ./Pipfile.lock /arisa2
-WORKDIR /arisa2
 
 # Install pip stuff
 # --deploy forces build failure if Pipfile and Pipfile.lock are out of sync

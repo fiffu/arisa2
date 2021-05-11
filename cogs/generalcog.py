@@ -118,7 +118,7 @@ class General(commands.Cog):
                 if comment:
                     author = ctx.message.author
                     name = getattr(author, 'nick', author.name)
-                    footer = f'{author.nick or author.name}: {comment}'
+                    footer = f'{name}: {comment}'
                 
                 has_arithmetic = any(
                     map(lambda x: x != None, 
@@ -135,16 +135,16 @@ class General(commands.Cog):
                     mod = parseint(grps['mod'], 0)
 
                     # dice should default to 1
-                    dice = parseint(grps['dice'], 1)
+                    dice = parseint(grps['dice']) or 1
 
 
         # Check if expression is too long (too much math)
-        if len(str(dice) + str(sides) + str(mod)) > 20:
+        if any([len(str(n)) > 5 for n in (dice, sides, mod)]):
             await ctx.send(f"That's just way too much work {BIRB}")
             return
 
         # Calc output
-        res = sum(random.randint(1, sides) + mod for _ in range(dice))
+        res = sum(random.randint(1, sides) for _ in range(dice)) + mod
 
         # Format output
         if is_hot_time():

@@ -28,9 +28,8 @@ RUN CHROME_SETUP=./google-chrome.deb \
     && apt-get install -y -f $CHROME_SETUP \
     && rm $CHROME_SETUP
 
-
-ADD . /arisa2
-WORKDIR /arisa2
+ADD ./Pipfile /arisa2
+ADD ./Pipfile.lock /arisa2
 
 # Install pip stuff
 # --deploy forces build failure if Pipfile and Pipfile.lock are out of sync
@@ -38,5 +37,8 @@ WORKDIR /arisa2
 # --ignore-pipfile makes pipenv reference Pipfile.lock instead of Pipfile
 RUN pip install pipenv \
     && pipenv install --deploy --system --ignore-pipfile
+
+ADD . /arisa2
+WORKDIR /arisa2
 
 CMD ["python3", "main.py"]

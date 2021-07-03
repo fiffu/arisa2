@@ -66,21 +66,42 @@ class General(commands.Cog):
         await ctx.send(embed=emb)
 
     @commands.command()
-    async def pokies(self, ctx, *args):
+    async def pokies(self, ctx, arg):
         # Get all custom Emoji from server
         all_emotes = ctx.guild.emojis
-        
+
         # Set up anonymous function and get emoji
         choose = lambda: random.choice(all_emotes)
-        e1, e2, e3 = choose(), choose(), choose()
+        reply = ""
+        if arg == 'legacy' or arg == 'l':
+            e1, e2, e3 = choose(), choose(), choose()
+            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
 
-        # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
-        # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
+            # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
+            # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
+
+        elif (arg.isnumeric()):
+            arg = int(arg)
+            # A 9x9 grid or larger will often exceed the Discord limit of 2000 chars, depending on emoji name lengths
+            if arg < 1 or arg > 9:
+                arg = 0
+                reply = "That's just way too much work {}".format(BIRB)
+            for x in range(arg):
+                for y in range(arg):
+                    if y == arg-1:
+                        reply += str(choose()) + '\n'
+                    else:
+                        reply += str(choose()) + " "
+        else:
+            reply = "That's just way too much work {}".format(BIRB)
 
         async with ctx.typing():
             await asleep(1)
-            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
-            await ctx.send(content=reply)
+            try:
+                await ctx.send(content=reply)
+            except:
+                reply = "That's just way too much work {}".format(BIRB)
+                await ctx.send(content=reply)
             
     @commands.command()
     async def roll(self, ctx, *args):

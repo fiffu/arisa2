@@ -86,12 +86,11 @@ class General(commands.Cog):
             if arg < 1 or arg > 9:
                 arg = 0
                 reply = "That's just way too much work {}".format(BIRB)
-            for x in range(arg):
-                for y in range(arg):
-                    if y == arg-1:
-                        reply += str(choose()) + '\n'
-                    else:
-                        reply += str(choose()) + " "
+            rows = [
+                ' '.join(choose() for x in range(arg))
+                for y in range(arg)
+            ]
+            reply = '\n'.join(rows)
         else:
             reply = "That's just way too much work {}".format(BIRB)
 

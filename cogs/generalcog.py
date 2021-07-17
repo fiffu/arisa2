@@ -80,19 +80,16 @@ class General(commands.Cog):
             # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
             # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
 
-        elif (arg.isnumeric()):
-            arg = int(arg)
-            # A 9x9 grid or larger will often exceed the Discord limit of 2000 chars, depending on emoji name lengths
-            if arg < 1 or arg > 9:
-                arg = 0
-                reply = "That's just way too much work {}".format(BIRB)
+        arg = abs(int(arg or 0))
+        # A 9x9 grid or larger will often exceed the Discord limit of 2000 chars, depending on emoji name lengths
+        if arg > 9:
+            reply = "That's just way too much work {}".format(BIRB)
+        else:
             rows = [
                 ' '.join(choose() for x in range(arg))
                 for y in range(arg)
             ]
             reply = '\n'.join(rows)
-        else:
-            reply = "That's just way too much work {}".format(BIRB)
 
         async with ctx.typing():
             await asleep(1)

@@ -14,14 +14,15 @@ RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RE
     && rm chromedriver_linux64.zip
 
 # Chrome deps
-RUN apt-get update
-RUN apt-get -y install \
-    gconf-service libappindicator1 libasound2 \
-    libatk1.0-0 libatk-bridge2.0-0 libcairo-gobject2 \
-    libdrm2 libgbm1 libgconf-2-4 libgtk-3-0 libnspr4 libnss3 \
-    libx11-xcb1 libxcb-dri3-0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 \
-    libxi6 libxinerama1 libxrandr2 libxss1 libxtst6 \
-    fonts-liberation
+RUN apt-get update \
+    && apt-get -y install \
+        gconf-service libappindicator1 libasound2 \
+        libatk1.0-0 libatk-bridge2.0-0 libcairo-gobject2 \
+        libdrm2 libgbm1 libgconf-2-4 libgtk-3-0 libnspr4 libnss3 \
+        libx11-xcb1 libxcb-dri3-0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 \
+        libxi6 libxinerama1 libxrandr2 libxss1 libxtst6 \
+        fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 # Chrome
 RUN CHROME_SETUP=./google-chrome.deb \
     && wget -O $CHROME_SETUP "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \

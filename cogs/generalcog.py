@@ -72,7 +72,7 @@ class General(commands.Cog):
         all_emotes = ctx.guild.emojis
 
         # Set up anonymous function and get emoji
-        choose = lambda: random.choice(all_emotes)
+        choose = lambda: str(random.choice(all_emotes))
         reply = ""
 
         arg = abs(int(arg or 0))
@@ -80,7 +80,7 @@ class General(commands.Cog):
         if not arg:
             # If no arg is given, fallback to legacy behaviour
             e1, e2, e3 = choose(), choose(), choose()
-            reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
+            reply = '{} {} {}'.format(e1, e2, e3)
 
             # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
             # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji

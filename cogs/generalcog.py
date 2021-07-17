@@ -66,24 +66,31 @@ class General(commands.Cog):
         await ctx.send(embed=emb)
 
     @commands.command()
-    async def pokies(self, ctx, arg):
+    async def pokies(self, ctx, arg=None):
+        """An avian slots machine."""
         # Get all custom Emoji from server
         all_emotes = ctx.guild.emojis
 
         # Set up anonymous function and get emoji
         choose = lambda: random.choice(all_emotes)
         reply = ""
-        if arg == 'legacy' or arg == 'l':
+
+        arg = abs(int(arg or 0))
+
+        if not arg:
+            # If no arg is given, fallback to legacy behaviour
             e1, e2, e3 = choose(), choose(), choose()
             reply = '{} {} {}'.format(str(e1), str(e2), str(e3))
 
             # TODO: Some kind of celebration/Easter egg if all three emoji are the same.
             # API to compare emoji: https://discordpy.readthedocs.io/en/latest/api.html?highlight=emoji#discord.Emoji
 
-        arg = abs(int(arg or 0))
-        # A 9x9 grid or larger will often exceed the Discord limit of 2000 chars, depending on emoji name lengths
-        if arg > 9:
+        # A grid larger than 9x9 will often exceed the Discord limit of 2000 chars,
+        # depending on emoji name lengths, so just give up :birb:
+        elif arg > 9:
             reply = "That's just way too much work {}".format(BIRB)
+
+        # Build the grid
         else:
             rows = [
                 ' '.join(choose() for x in range(arg))

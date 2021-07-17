@@ -65,9 +65,10 @@ class General(commands.Cog):
                     colour=0x1e2327)
         await ctx.send(embed=emb)
 
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.channel)
     @commands.command()
     async def pokies(self, ctx, arg=None):
-        """An avian slots machine."""
+        """An avian slots machine. Use with care."""
         # Get all custom Emoji from server
         all_emotes = ctx.guild.emojis
 

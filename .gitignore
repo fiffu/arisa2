@@ -1,15 +1,7 @@
-# IDE stuff
-.vscode
-
 appconfig/config.conf
 __pycache__
 
-# Environment
+# Don't deploy machine environment
 .env
 bin/*
-
-# Logs & artifacts
 *.log
-*json
-*.txt
-*.zip

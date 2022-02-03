@@ -108,7 +108,7 @@ class General(commands.Cog):
                 await ctx.send(content=reply)
             
     @commands.command()
-    async def roll(self, ctx, *args):
+    async def roll(self, ctx, *_):
         """Rolls dice (supports algebraic notation, such as !roll 3d5+10)"""
         def parseint(x, default=0):
             try:
@@ -121,8 +121,10 @@ class General(commands.Cog):
             r'([Dd](?=\d))?'             #        d
             r'(?P<sides>\d+)?'           #         5
             r'(?P<mod>\s?[-\+]\s?\d+)?'  #          +10
-            r'(?P<comment>.*)'           #              check these dubs
+            r'(?P<comment>\n?.*)'        #              check these dubs
         )
+        msg = ctx.message.content
+        args = msg.replace('!roll', '')
 
         use_default_roll = True
         dice, sides, mod = (DEFAULT_ROLL_DICE_COUNT,
@@ -132,7 +134,6 @@ class General(commands.Cog):
 
         match = None
         if args:
-            args = ' '.join(args).strip()
             match = re.match(repatt, args)
 
             if match:

@@ -98,7 +98,8 @@ class General(commands.Cog):
             r'(?P<mod>\s?[-\+]\s?\d+)?'  #          +10
             r'(?P<comment>.*)'           #              check these dubs
         )
-        args = ctx.message.split('\n')[0].split(None, 1)[1]
+        msg = ctx.message.content
+        args = msg.split('\n')[0].split(None, 1)[1]
 
         use_default_roll = True
         dice, sides, mod = (DEFAULT_ROLL_DICE_COUNT,

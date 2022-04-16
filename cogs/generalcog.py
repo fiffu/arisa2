@@ -124,7 +124,7 @@ class General(commands.Cog):
             r'(?P<comment>\n?.*)'        #              check these dubs
         )
         msg = ctx.message.content
-        args = msg.replace('!roll', '')
+        args = msg.replace('!roll', '').strip()
 
         use_default_roll = True
         dice, sides, mod = (DEFAULT_ROLL_DICE_COUNT,

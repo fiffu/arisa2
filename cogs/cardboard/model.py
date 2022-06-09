@@ -1,3 +1,4 @@
+from email.utils import parsedate
 import logging
 import random
 from typing import List, Tuple
@@ -27,6 +28,43 @@ VETO = config.VETO
 FLOATS = config.FLOATS
 SINKS = config.SINKS
 EXCLUDE = set(config.EXCLUDE_POSTS_TAGGED_WITH)
+
+RATING_PREFIX_NEGATE = '-'
+RATING_GENERAL = 'general'
+RATING_SENSITIVE = 'sensitive'
+RATING_QUESTIONABLE = 'questionble'
+RATING_EXPLICIT = 'explicit'
+RATINGS = [
+    RATING_GENERAL,
+    RATING_SENSITIVE,
+    RATING_QUESTIONABLE,
+    RATING_EXPLICIT,
+]
+
+
+def negate_rating(rating: str) -> str:
+    return RATING_PREFIX_NEGATE + rating
+
+
+def parse_rating(rating: str) -> Tuple[str, bool]:
+    parsed = None
+    negated = False
+
+    if rating not in RATINGS:
+        return parsed, negated
+
+    if is_negated(rating):
+        parsed = rating[1:]
+        negated = True
+    else:
+        parsed = rating
+
+    return parsed, negated
+
+
+def is_negated(rating: str) -> bool:
+    return rating.startswith(RATING_PREFIX_NEGATE)
+
 
 @memoized
 def dumb_search(search_string):
@@ -97,13 +135,14 @@ async def smart_search(query, explicit_rating) -> List[Post]:
 
     # inject rating
     if explicit_rating:
+        # defaults
         minus = ''
-        rating = 's'
+        rating = RATING_GENERAL
 
-        if explicit_rating[-1] in ['e', 'q', 's']:
-            rating = explicit_rating[-1]
-            if explicit_rating.startswith('-'):
-                minus = '-'
+        parsed, negated = parse_rating(explicit_rating)
+        if parsed:
+            rating = parsed
+            minus = '-' if negated else ''
 
         add_to_search = f'{minus}rating:{rating}'
 

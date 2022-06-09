@@ -143,11 +143,11 @@ class DanbooruSearch(commands.Cog):
         """Finds a cute picture with the given tag (spaces convert to _)
         """
         query = ' '.join(args)
-        await self.search(ctx, query, 's')
+        await self.search(ctx, query, RATING_GENERAL)
 
 
     @commands.command()
     async def lewd(self, ctx, *args):
         """Finds a LEWD picture with the given tag"""
         query = ' '.join(args)
-        await self.search(ctx, query, '-s')
+        await self.search(ctx, query, RATING_PREFIX_NEGATE+RATING_GENERAL)

@@ -150,4 +150,4 @@ class DanbooruSearch(commands.Cog):
     async def lewd(self, ctx, *args):
         """Finds a LEWD picture with the given tag"""
         query = ' '.join(args)
-        await self.search(ctx, query, RATING_PREFIX_NEGATE+RATING_GENERAL)
+        await self.search(ctx, query, negate_rating(RATING_GENERAL))

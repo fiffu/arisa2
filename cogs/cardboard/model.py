@@ -46,11 +46,15 @@ def negate_rating(rating: str) -> str:
     return RATING_PREFIX_NEGATE + rating
 
 
+def is_negated(rating: str) -> bool:
+    return rating.startswith(RATING_PREFIX_NEGATE)
+
+
 def parse_rating(rating: str) -> Tuple[str, bool]:
     parsed = None
     negated = False
 
-    if rating not in RATINGS:
+    if rating not in RATINGS + [negate_rating(r) for r in RATINGS]:
         return parsed, negated
 
     if is_negated(rating):
@@ -60,10 +64,6 @@ def parse_rating(rating: str) -> Tuple[str, bool]:
         parsed = rating
 
     return parsed, negated
-
-
-def is_negated(rating: str) -> bool:
-    return rating.startswith(RATING_PREFIX_NEGATE)
 
 
 @memoized
@@ -126,8 +126,8 @@ async def smart_search(query, explicit_rating) -> List[Post]:
 
     Args
     query: str - search query to parse
-    explicit_rating: str - should match /-?[eqs]/ if provided, which is parsed
-                           into extra search constraint as /-?rating:(e|q|s)/
+    explicit_rating: str - one of the strings in RATINGS, optionally prefixed with
+                           RATING_PREFIX_NEGATE.
     """
     # query as single tag
     cands, alias_applied = Parser(spaces_to_underscore=True).parse(query)
